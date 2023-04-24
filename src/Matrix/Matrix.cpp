@@ -118,3 +118,43 @@ Matrix::Ptr Matrix::transpose(Matrix& matrix) {
 Matrix::Ptr Matrix::elementWiseMultiply(Matrix& lhs, Matrix& rhs) {
     return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(lhs, rhs);
 }
+
+void Matrix::clip(float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
+    calculation[Config::getInstance().getProvider()]->clip_inline(*this,
+                                                                  minBound, maxBound,
+                                                                  minValueToSet, maxValueToSet);
+}
+
+Matrix::Ptr Matrix::clip(Matrix &matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
+    return calculation[Config::getInstance().getProvider()]->clip(matrix,
+                                                                  minBound, maxBound,
+                                                                  minValueToSet, maxValueToSet);
+}
+
+Matrix::Ptr Matrix::operator+(Matrix &rhs) {
+    return calculation[Config::getInstance().getProvider()]->sum(*this, rhs);
+}
+
+Matrix::Ptr Matrix::operator+(float value) {
+    Matrix matrix(1, 1);
+    matrix.get(0, 0) = value;
+    return calculation[Config::getInstance().getProvider()]->sum(*this, matrix);
+}
+
+Matrix::Ptr Matrix::operator-() {
+    Matrix matrix(1, 1);
+    matrix.get(0, 0) = -1;
+    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
+}
+
+Matrix::Ptr Matrix::operator-(Matrix &rhs) {
+    return calculation[Config::getInstance().getProvider()]->subtract(*this, rhs);
+}
+
+void Matrix::reciprocal() {
+    calculation[Config::getInstance().getProvider()]->reciprocal_inline(*this);
+}
+
+Matrix::Ptr Matrix::reciprocal(Matrix &matrix) {
+    return calculation[Config::getInstance().getProvider()]->reciprocal(matrix);
+}

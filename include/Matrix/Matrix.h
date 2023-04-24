@@ -49,6 +49,19 @@ public:
     static Matrix::Ptr transpose(Matrix& matrix);
 
     static Matrix::Ptr elementWiseMultiply(Matrix &lhs, Matrix &rhs);
+
+    void clip(float minBound, float maxBound,
+              float minValueToSet, float maxValueToSet);
+    static Matrix::Ptr clip(Matrix &matrix,
+                    float minBound, float maxBound,
+                    float minValueToSet, float maxValueToSet);
+
+    Matrix::Ptr operator+ (Matrix& rhs);
+    Matrix::Ptr operator+ (float value);
+    Matrix::Ptr operator-();
+    Matrix::Ptr operator- (Matrix& rhs);
+    void reciprocal ();
+    static Matrix::Ptr reciprocal (Matrix& matrix);
 };
 
 

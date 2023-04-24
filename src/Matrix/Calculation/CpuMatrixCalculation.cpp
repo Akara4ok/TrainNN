@@ -126,3 +126,84 @@ Matrix::Ptr CpuMatrixCalculation::elementWiseMultiply(Matrix &lhs, Matrix &rhs) 
     }
     return result;
 }
+
+std::unique_ptr<Matrix>
+CpuMatrixCalculation::clip(Matrix &matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
+    Matrix::Ptr result(new Matrix(matrix));
+
+    for (int i = 0; i < matrix.getHeight(); ++i) {
+        for (int j = 0; j < matrix.getWidth(); ++j) {
+            if(result->get(i, j) < minBound){
+                result->get(i, j) = minValueToSet;
+            }
+            if(result->get(i, j) > maxBound){
+                result->get(i, j) = maxValueToSet;
+            }
+        }
+    }
+    return result;
+}
+
+void CpuMatrixCalculation::clip_inline(Matrix &matrix, float minBound, float maxBound, float minValueToSet,
+                                       float maxValueToSet) {
+    for (int i = 0; i < matrix.getHeight(); ++i) {
+        for (int j = 0; j < matrix.getWidth(); ++j) {
+            if(matrix.get(i, j) < minBound){
+                matrix.get(i, j) = minValueToSet;
+            }
+            if(matrix.get(i, j) >= maxBound){
+                matrix.get(i, j) = maxValueToSet;
+            }
+        }
+    }
+}
+
+std::unique_ptr<Matrix> CpuMatrixCalculation::sum(Matrix &lhs, Matrix &rhs) {
+    Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
+
+    for (int i = 0; i < lhs.getHeight(); ++i) {
+        for (int j = 0; j < lhs.getWidth(); ++j) {
+            result->get(i, j) =
+                    lhs.get(i, j) +
+                    rhs.get(rhs.getHeight() == lhs.getHeight() ? i : 0,
+                            rhs.getWidth() == lhs.getWidth() ? j : 0);
+        }
+    }
+
+    return result;
+}
+
+std::unique_ptr<Matrix> CpuMatrixCalculation::subtract(Matrix &lhs, Matrix &rhs) {
+    Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
+
+    for (int i = 0; i < lhs.getHeight(); ++i) {
+        for (int j = 0; j < lhs.getWidth(); ++j) {
+            result->get(i, j) =
+                    lhs.get(i, j) -
+                    rhs.get(rhs.getHeight() == lhs.getHeight() ? i : 0,
+                            rhs.getWidth() == lhs.getWidth() ? j : 0);
+        }
+    }
+
+    return result;
+}
+
+std::unique_ptr<Matrix> CpuMatrixCalculation::reciprocal(Matrix &matrix) {
+    Matrix::Ptr result(new Matrix(matrix.getHeight(), matrix.getWidth()));
+
+    for (int i = 0; i < matrix.getHeight(); ++i) {
+        for (int j = 0; j < matrix.getWidth(); ++j) {
+            result->get(i, j) = 1 / matrix.get(i, j);
+        }
+    }
+
+    return result;
+}
+
+void CpuMatrixCalculation::reciprocal_inline(Matrix &matrix) {
+    for (int i = 0; i < matrix.getHeight(); ++i) {
+        for (int j = 0; j < matrix.getWidth(); ++j) {
+            matrix.get(i, j) = 1 / matrix.get(i, j);
+        }
+    }
+}

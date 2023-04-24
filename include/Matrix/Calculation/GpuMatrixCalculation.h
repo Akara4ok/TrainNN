@@ -21,6 +21,17 @@ public:
     std::unique_ptr<Matrix> transpose(Matrix &matrix) override;
     void transpose_inline(Matrix& matrix) override;
     std::unique_ptr<Matrix> elementWiseMultiply(Matrix &lhs, Matrix &rhs) override;
+    std::unique_ptr<Matrix>
+    clip(Matrix &matrix,
+         float minBound, float maxBound,
+         float minValueToSet, float maxValueToSet) override;
+    void clip_inline(Matrix &matrix,
+                     float minBound, float maxBound,
+                     float minValueToSet, float maxValueToSet) override;
+    std::unique_ptr<Matrix> sum(Matrix& lhs, Matrix& rhs) override;
+    std::unique_ptr<Matrix> subtract(Matrix& lhs, Matrix& rhs) override;
+    std::unique_ptr<Matrix> reciprocal(Matrix &matrix) override;
+    void reciprocal_inline(Matrix &matrix) override;
 };
 
 
