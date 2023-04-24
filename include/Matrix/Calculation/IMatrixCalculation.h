@@ -20,6 +20,7 @@ public:
     virtual std::unique_ptr<Matrix> transpose(Matrix& matrix) = 0;
     virtual void transpose_inline(Matrix& matrix) = 0;
     virtual std::unique_ptr<Matrix> elementWiseMultiply(Matrix& lhs, Matrix& rhs) = 0;
+    virtual std::unique_ptr<Matrix> elementWiseDivide(Matrix& lhs, Matrix& rhs) = 0;
     virtual std::unique_ptr<Matrix> clip(Matrix& matrix,
                                          float minBound, float maxBound,
                                          float minValueToSet, float maxValueToSet) = 0;

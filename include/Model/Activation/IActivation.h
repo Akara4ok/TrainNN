@@ -5,7 +5,13 @@
 #ifndef CMAKE_AND_CUDA_IACTIVATION_H
 #define CMAKE_AND_CUDA_IACTIVATION_H
 
+#include <memory>
 #include "Matrix/Matrix.h"
+
+enum class Activation{
+    Relu,
+    Sigmoid
+};
 
 class IActivation {
 public:

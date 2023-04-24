@@ -115,10 +115,6 @@ Matrix::Ptr Matrix::transpose(Matrix& matrix) {
     return calculation[Config::getInstance().getProvider()]->transpose(matrix);
 }
 
-Matrix::Ptr Matrix::elementWiseMultiply(Matrix& lhs, Matrix& rhs) {
-    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(lhs, rhs);
-}
-
 void Matrix::clip(float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
     calculation[Config::getInstance().getProvider()]->clip_inline(*this,
                                                                   minBound, maxBound,
@@ -149,6 +145,32 @@ Matrix::Ptr Matrix::operator-() {
 
 Matrix::Ptr Matrix::operator-(Matrix &rhs) {
     return calculation[Config::getInstance().getProvider()]->subtract(*this, rhs);
+}
+
+Matrix::Ptr Matrix::operator-(float value) {
+    Matrix matrix(1, 1);
+    matrix.get(0, 0) = value;
+    return calculation[Config::getInstance().getProvider()]->subtract(*this, matrix);
+}
+
+Matrix::Ptr Matrix::operator*(Matrix &rhs) {
+    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, rhs);
+}
+
+Matrix::Ptr Matrix::operator*(float value) {
+    Matrix matrix(1, 1);
+    matrix.get(0, 0) = value;
+    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
+}
+
+Matrix::Ptr Matrix::operator/(Matrix &rhs) {
+    return calculation[Config::getInstance().getProvider()]->elementWiseDivide(*this, rhs);
+}
+
+Matrix::Ptr Matrix::operator/(float value) {
+    Matrix matrix(1, 1);
+    matrix.get(0, 0) = value;
+    return calculation[Config::getInstance().getProvider()]->elementWiseDivide(*this, matrix);
 }
 
 void Matrix::reciprocal() {

@@ -21,6 +21,7 @@ public:
     std::unique_ptr<Matrix> transpose(Matrix &matrix) override;
     void transpose_inline(Matrix& matrix) override;
     std::unique_ptr<Matrix> elementWiseMultiply(Matrix &lhs, Matrix &rhs) override;
+    std::unique_ptr<Matrix> elementWiseDivide(Matrix& lhs, Matrix& rhs) override;
     std::unique_ptr<Matrix>
     clip(Matrix &matrix,
          float minBound, float maxBound,

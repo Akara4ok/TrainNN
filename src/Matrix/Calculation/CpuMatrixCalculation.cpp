@@ -127,6 +127,20 @@ Matrix::Ptr CpuMatrixCalculation::elementWiseMultiply(Matrix &lhs, Matrix &rhs) 
     return result;
 }
 
+std::unique_ptr<Matrix> CpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Matrix &rhs) {
+    Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
+
+    for (int i = 0; i < lhs.getHeight(); ++i) {
+        for (int j = 0; j < lhs.getWidth(); ++j) {
+            result->get(i, j) =
+                    lhs.get(i, j) /
+                    rhs.get(rhs.getHeight() == lhs.getHeight() ? i : 0,
+                            rhs.getWidth() == lhs.getWidth() ? j : 0);
+        }
+    }
+    return result;
+}
+
 std::unique_ptr<Matrix>
 CpuMatrixCalculation::clip(Matrix &matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
     Matrix::Ptr result(new Matrix(matrix));

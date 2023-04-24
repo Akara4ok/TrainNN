@@ -41,6 +41,10 @@ Matrix::Ptr GpuMatrixCalculation::elementWiseMultiply(Matrix &lhs, Matrix &rhs) 
     return Matrix::Ptr();
 }
 
+std::unique_ptr<Matrix> GpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Matrix &rhs) {
+    return std::unique_ptr<Matrix>();
+}
+
 std::unique_ptr<Matrix>
 GpuMatrixCalculation::clip(Matrix &matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
     return std::unique_ptr<Matrix>();

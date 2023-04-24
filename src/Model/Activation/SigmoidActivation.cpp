@@ -13,5 +13,5 @@ Matrix::Ptr SigmoidActivation::calculate(Matrix& matrix) {
 Matrix::Ptr SigmoidActivation::derivative(Matrix &matrix) {
     Matrix::Ptr sigmoid = calculate(matrix);
     Matrix::Ptr negativeSigmoid = -(*sigmoid);
-    return Matrix::elementWiseMultiply(*sigmoid, *(*negativeSigmoid + 1));
+    return (*sigmoid) * (*(*negativeSigmoid + 1));
 }
