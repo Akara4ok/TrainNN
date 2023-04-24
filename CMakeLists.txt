@@ -5,6 +5,9 @@ add_executable(TrainNN
         src/main.cpp
         src/Matrix/Matrix.cpp
         src/Matrix/Calculation/CpuMatrixCalculation.cpp src/Matrix/Calculation/GpuMatrixCalculation.cpp
-        src/Model/Activation/ReluActivation.cpp src/Model/Activation/SigmoidActivation.cpp src/Model/CostFunction/BinaryCrossEntropy.cpp)
+        src/Model/Activation/ReluActivation.cpp src/Model/Activation/SigmoidActivation.cpp
+        src/Model/CostFunction/BinaryCrossEntropy.cpp
+        src/Model/Layer/Linear.cpp
+        src/Model/Model.cpp)
 
 target_include_directories(TrainNN PUBLIC include/)
