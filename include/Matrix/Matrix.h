@@ -17,12 +17,12 @@ class Matrix {
     int width;
     static std::map<Provider, std::unique_ptr<IMatrixCalculation>> calculation;
 public:
-    typedef std::unique_ptr<Matrix> Ptr;
+    typedef std::shared_ptr<Matrix> Ptr;
 
     static void initCalculation();
 
     Matrix(int height, int width);
-    Matrix(Matrix &other);
+    Matrix(Matrix& other);
     ~Matrix();
 
     float& get(int index);
@@ -31,6 +31,8 @@ public:
     int getHeight() const;
 
     void setNewDataWithSize(float* new_data, int new_height, int new_width);
+    void randomInit();
+    void zeroInit();
 
     friend std::ostream& operator<<(std::ostream& os, Matrix& obj);
 

@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <random>
 #include "Matrix/Matrix.h"
 #include "Matrix/Calculation/CpuMatrixCalculation.h"
 #include "Matrix/Calculation/GpuMatrixCalculation.h"
@@ -57,6 +58,26 @@ void Matrix::setNewDataWithSize(float *new_data, int new_height, int new_width) 
     data = new_data;
     height = new_height;
     width = new_width;
+}
+
+void Matrix::randomInit() {
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
+    std::normal_distribution<double> dist{0, 1};
+
+    for (int i = 0; i < height; ++i) {
+        for (int j = 0; j < width; ++j) {
+            get(i, j) = dist(gen);
+        }
+    }
+}
+
+void Matrix::zeroInit() {
+    for (int i = 0; i < height; ++i) {
+        for (int j = 0; j < width; ++j) {
+            get(i, j) = 0;
+        }
+    }
 }
 
 std::ostream &operator<<(std::ostream& os, Matrix& matrix) {

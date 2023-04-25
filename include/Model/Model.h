@@ -23,9 +23,9 @@ public:
     Model(int inputSize, int batchSize);
     void add(ILayer::Ptr&& layer);
     void compile(float learningRate, Cost costType);
-    void train(int epochs, Matrix& train_x, Matrix& train_y, Matrix& val_x, Matrix& val_y);
-    Matrix::Ptr predict(Matrix& input);
-    void test(Matrix& test_x, Matrix& test_y);
+    void train(int epochs, Matrix::Ptr train_x, Matrix::Ptr train_y, Matrix::Ptr val_x, Matrix::Ptr val_y);
+    Matrix::Ptr predict(Matrix::Ptr input);
+    float test(Matrix::Ptr test_x, Matrix::Ptr test_y);
 };
 
 

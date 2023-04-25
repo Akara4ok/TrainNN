@@ -41,13 +41,13 @@ Matrix::Ptr GpuMatrixCalculation::elementWiseMultiply(Matrix &lhs, Matrix &rhs) 
     return Matrix::Ptr();
 }
 
-std::unique_ptr<Matrix> GpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Matrix &rhs) {
-    return std::unique_ptr<Matrix>();
+Matrix::Ptr GpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Matrix &rhs) {
+    return Matrix::Ptr();
 }
 
-std::unique_ptr<Matrix>
+Matrix::Ptr
 GpuMatrixCalculation::clip(Matrix &matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
-    return std::unique_ptr<Matrix>();
+    return Matrix::Ptr();
 }
 
 void GpuMatrixCalculation::clip_inline(Matrix &matrix, float minBound, float maxBound, float minValueToSet,
@@ -55,16 +55,16 @@ void GpuMatrixCalculation::clip_inline(Matrix &matrix, float minBound, float max
 
 }
 
-std::unique_ptr<Matrix> GpuMatrixCalculation::sum(Matrix &lhs, Matrix &rhs) {
-    return std::unique_ptr<Matrix>();
+Matrix::Ptr GpuMatrixCalculation::sum(Matrix &lhs, Matrix &rhs) {
+    return Matrix::Ptr();
 }
 
-std::unique_ptr<Matrix> GpuMatrixCalculation::subtract(Matrix &lhs, Matrix &rhs) {
-    return std::unique_ptr<Matrix>();
+Matrix::Ptr GpuMatrixCalculation::subtract(Matrix &lhs, Matrix &rhs) {
+    return Matrix::Ptr();
 }
 
-std::unique_ptr<Matrix> GpuMatrixCalculation::reciprocal(Matrix &matrix) {
-    return std::unique_ptr<Matrix>();
+Matrix::Ptr GpuMatrixCalculation::reciprocal(Matrix &matrix) {
+    return Matrix::Ptr();
 }
 
 void GpuMatrixCalculation::reciprocal_inline(Matrix &matrix) {

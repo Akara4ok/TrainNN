@@ -2,6 +2,7 @@
 // Created by vlad on 4/24/23.
 //
 
+#include <iostream>
 #include "Model/CostFunction/BinaryCrossEntropy.h"
 
 float BinaryCrossEntropy::calculate(Matrix &YHat, Matrix &Y) {
@@ -12,6 +13,6 @@ float BinaryCrossEntropy::calculate(Matrix &YHat, Matrix &Y) {
 
 Matrix::Ptr BinaryCrossEntropy::derivative(Matrix &YHat, Matrix &Y) {
     Matrix::Ptr first = - *(Y / YHat);
-    Matrix::Ptr second = *(*-Y + 1) / *Matrix::log(*(*-YHat + 1));
+    Matrix::Ptr second = *(*-Y + 1) / *(*-YHat + 1);
     return *first + *second;
 }

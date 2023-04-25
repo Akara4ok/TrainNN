@@ -127,7 +127,7 @@ Matrix::Ptr CpuMatrixCalculation::elementWiseMultiply(Matrix &lhs, Matrix &rhs) 
     return result;
 }
 
-std::unique_ptr<Matrix> CpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Matrix &rhs) {
+Matrix::Ptr CpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Matrix &rhs) {
     Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
 
     for (int i = 0; i < lhs.getHeight(); ++i) {
@@ -141,7 +141,7 @@ std::unique_ptr<Matrix> CpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Mat
     return result;
 }
 
-std::unique_ptr<Matrix>
+Matrix::Ptr
 CpuMatrixCalculation::clip(Matrix &matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
     Matrix::Ptr result(new Matrix(matrix));
 
@@ -172,7 +172,7 @@ void CpuMatrixCalculation::clip_inline(Matrix &matrix, float minBound, float max
     }
 }
 
-std::unique_ptr<Matrix> CpuMatrixCalculation::sum(Matrix &lhs, Matrix &rhs) {
+Matrix::Ptr CpuMatrixCalculation::sum(Matrix &lhs, Matrix &rhs) {
     Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
 
     for (int i = 0; i < lhs.getHeight(); ++i) {
@@ -187,7 +187,7 @@ std::unique_ptr<Matrix> CpuMatrixCalculation::sum(Matrix &lhs, Matrix &rhs) {
     return result;
 }
 
-std::unique_ptr<Matrix> CpuMatrixCalculation::subtract(Matrix &lhs, Matrix &rhs) {
+Matrix::Ptr CpuMatrixCalculation::subtract(Matrix &lhs, Matrix &rhs) {
     Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
 
     for (int i = 0; i < lhs.getHeight(); ++i) {
@@ -202,7 +202,7 @@ std::unique_ptr<Matrix> CpuMatrixCalculation::subtract(Matrix &lhs, Matrix &rhs)
     return result;
 }
 
-std::unique_ptr<Matrix> CpuMatrixCalculation::reciprocal(Matrix &matrix) {
+Matrix::Ptr CpuMatrixCalculation::reciprocal(Matrix &matrix) {
     Matrix::Ptr result(new Matrix(matrix.getHeight(), matrix.getWidth()));
 
     for (int i = 0; i < matrix.getHeight(); ++i) {
