@@ -7,6 +7,7 @@
 
 #include <memory>
 #include "Matrix/Matrix.h"
+#include "CostTypes.h"
 
 class ICostFunction {
 public:
@@ -14,7 +15,7 @@ public:
 
     virtual float calculate(Matrix& YHat, Matrix& Y) = 0;
     virtual Matrix::Ptr derivative(Matrix& YHat, Matrix& Y) = 0;
-    virtual ~ICostFunction(){};
+    virtual ~ICostFunction() = default;
 };
 
 #endif //CMAKE_AND_CUDA_ICOSTFUNCTION_H

@@ -31,6 +31,7 @@ public:
     std::vector<Matrix::Ptr> getLabel();
     virtual Matrix::Ptr preprocessImage(std::string imagePath) = 0;
     virtual Matrix::Ptr preprocessLabel(std::string imagePath) = 0;
+    virtual ~Dataset() = default;
 };
 
 

@@ -9,7 +9,6 @@
 #include "Matrix/Matrix.h"
 #include "Model/Layer/ILayer.h"
 #include "Model/CostFunction/ICostFunction.h"
-#include "Model/CostFunction/CostTypes.h"
 
 class Model {
     int inputSize;
@@ -24,9 +23,12 @@ public:
     explicit Model(int inputSize);
     void add(ILayer::Ptr&& layer);
     void compile(float learningRate, Cost costType);
-    void train(int epochs, Matrix::Ptr train_x, Matrix::Ptr train_y, Matrix::Ptr val_x, Matrix::Ptr val_y);
+    void train(int epochs,
+               const std::vector<Matrix::Ptr> &train_x, const std::vector<Matrix::Ptr> &train_y,
+               const std::vector<Matrix::Ptr> &val_x, const std::vector<Matrix::Ptr> &val_y);
     Matrix::Ptr predict(Matrix::Ptr input);
-    float test(Matrix::Ptr test_x, Matrix::Ptr test_y);
+    std::vector<Matrix::Ptr> predict(std::vector<Matrix::Ptr> input);
+    void test(std::vector<Matrix::Ptr> test_x, std::vector<Matrix::Ptr> test_y);
     void serialize(std::string path);
     void deserialize(std::string path);
 };

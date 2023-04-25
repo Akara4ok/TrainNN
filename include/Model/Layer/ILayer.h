@@ -21,7 +21,7 @@ public:
     virtual void initWeights(int previousHidden) = 0;
     virtual void serialize(std::ofstream& file) = 0;
     virtual void deserialize(std::ifstream& file) = 0;
-    virtual ~ILayer(){};
+    virtual ~ILayer() = default;
 };
 
 

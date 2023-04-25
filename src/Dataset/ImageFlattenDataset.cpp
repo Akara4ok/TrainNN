@@ -11,7 +11,7 @@
 #include "Dataset/ImageFlattenDataset.h"
 
 ImageFlattenDataset::ImageFlattenDataset(std::string folderPath, int imageHeight, int imageWidth, int batchSize,
-                                         int seed)
+                                         int fixedSize, int seed)
     : Dataset(folderPath, batchSize, seed), imageHeight(imageHeight), imageWidth(imageWidth)  {
     std::set<std::string> uniqueLabels;
     for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(folderPath)){
@@ -30,24 +30,37 @@ ImageFlattenDataset::ImageFlattenDataset(std::string folderPath, int imageHeight
     std::mt19937 g(rd());
     g.seed(seed);
     std::shuffle(imagePaths.begin(), imagePaths.end(), g);
+    if(fixedSize > 0){
+        imagePaths.erase(imagePaths.begin() + fixedSize + 1, imagePaths.end());
+    }
 
     std::vector<Matrix::Ptr> singleBatchData;
     std::vector<Matrix::Ptr> singleBatchLabel;
     for (const auto& imagePath : imagePaths) {
-        singleBatchData.push_back(preprocessImage(imagePath));
-        singleBatchLabel.push_back(preprocessLabel(imagePath));
+        try {
+            singleBatchData.push_back(preprocessImage(imagePath));
+            singleBatchLabel.push_back(preprocessLabel(imagePath));
+        }
+        catch (std::exception& e){
+
+        }
     }
 
-    data.push_back(Matrix::merge(singleBatchData.begin(), singleBatchData.end(), 0));
-    labels.push_back(Matrix::merge(singleBatchLabel.begin(), singleBatchLabel.end(), 0));
-}
+    if(batchSize == -1){
+        this->batchSize = singleBatchData.size();
+    }
+    int datasetSize = singleBatchData.size();
+    int batchNum = (datasetSize + this->batchSize - 1) / this->batchSize;
+    for (int i = 0; i < batchNum; ++i) {
+        auto dataBegin = singleBatchData.begin() + i * this->batchSize;
+        auto dataEnd = singleBatchData.begin() + std::min((i + 1) * this->batchSize, datasetSize);
+        data.push_back(Matrix::merge(dataBegin, dataEnd, 0));
 
-std::vector<Matrix::Ptr> ImageFlattenDataset::getData() {
-    return Dataset::getData();
-}
-
-std::vector<Matrix::Ptr> ImageFlattenDataset::getLabel() {
-    return Dataset::getLabel();
+        auto labelBegin = singleBatchLabel.begin() + i * this->batchSize;
+        auto labelEnd = singleBatchLabel.begin() +
+                                                     std::min((i + 1) * this->batchSize, datasetSize);
+        labels.push_back(Matrix::merge(labelBegin, labelEnd, 0));
+    }
 }
 
 Matrix::Ptr ImageFlattenDataset::preprocessImage(std::string imagePath) {

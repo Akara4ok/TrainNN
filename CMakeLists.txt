@@ -12,7 +12,7 @@ add_executable(TrainNN
         src/Model/CostFunction/BinaryCrossEntropy.cpp
         src/Model/Layer/Linear.cpp
         src/Model/Model.cpp
-        src/Dataset/Dataset.cpp src/Dataset/ImageFlattenDataset.cpp src/Model/Activation/ActivationTypes.cpp src/Model/CostFunction/CostTypes.cpp)
+        src/Dataset/Dataset.cpp src/Dataset/ImageFlattenDataset.cpp src/Model/Activation/ActivationTypes.cpp src/Model/CostFunction/CostTypes.cpp src/Model/Metrics/Accuracy.cpp)
 
 target_link_libraries(TrainNN ${OpenCV_LIBS})
 target_include_directories(TrainNN PUBLIC include/)

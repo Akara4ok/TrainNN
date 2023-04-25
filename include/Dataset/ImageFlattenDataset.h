@@ -12,11 +12,10 @@ class ImageFlattenDataset : public Dataset {
     int imageWidth;
     std::vector<std::string> imagePaths;
 public:
-    ImageFlattenDataset(std::string folderPath, int imageHeight, int imageWidth, int batchSize = -1, int seed = 42);
-    std::vector<Matrix::Ptr> getData();
-    std::vector<Matrix::Ptr> getLabel();
-    Matrix::Ptr preprocessImage(std::string imagePath);
-    Matrix::Ptr preprocessLabel(std::string imagePath);
+    ImageFlattenDataset(std::string folderPath, int imageHeight, int imageWidth, int batchSize = -1,
+                        int fixedSize = -1, int seed = 42);
+    Matrix::Ptr preprocessImage(std::string imagePath) override;
+    Matrix::Ptr preprocessLabel(std::string imagePath) override;
 };
 
 

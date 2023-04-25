@@ -6,6 +6,7 @@
 #define CMAKE_AND_CUDA_IACTIVATION_H
 
 #include <memory>
+#include "ActivationTypes.h"
 #include "Matrix/Matrix.h"
 
 class IActivation {
@@ -14,7 +15,7 @@ public:
 
     virtual Matrix::Ptr calculate(Matrix& matrix) = 0;
     virtual Matrix::Ptr derivative(Matrix &matrix) = 0;
-    virtual ~IActivation(){};
+    virtual ~IActivation() = default;
 };
 
 #endif //CMAKE_AND_CUDA_IACTIVATION_H

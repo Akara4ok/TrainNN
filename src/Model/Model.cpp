@@ -4,10 +4,10 @@
 
 #include <algorithm>
 #include <iostream>
-#include <fstream>
 #include "Model/Model.h"
 #include "Model/Layer/Linear.h"
 #include "Model/CostFunction/BinaryCrossEntropy.h"
+#include "Model/Metrics/Accuracy.h"
 
 Model::Model(int inputSize) : inputSize(inputSize) {}
 
@@ -27,21 +27,45 @@ void Model::compile(float learningRate, Cost costType) {
     }
 }
 
-void Model::train(int epochs, Matrix::Ptr train_x, Matrix::Ptr train_y, Matrix::Ptr val_x, Matrix::Ptr val_y) {
-    for (int k = 0; k < epochs; ++k) {
-        Matrix::Ptr current = train_x;
-        for (const auto & layer : layers) {
-            current = layer->forwardWithCache(current);
+void Model::train(int epochs,
+                  const std::vector<Matrix::Ptr> &train_x, const std::vector<Matrix::Ptr> &train_y,
+                  const std::vector<Matrix::Ptr> &val_x, const std::vector<Matrix::Ptr> &val_y) {
+    for (int e = 0; e < epochs; ++e) {
+        std::cout << "Epoch " << e << ": ";
+        if(train_x.size() > 1){
+            std::cout << std::endl;
         }
-        float cost = costFunction->calculate(*current, *train_y);
-        Matrix::Ptr dCurrent = costFunction->derivative(*current, *train_y);
+        float val_loss = 0;
+        float val_accuracy = 0;
+        int datasetSize = 0;
+        for (int t = 0; t < train_x.size(); ++t) {
+            Matrix::Ptr current = train_x[t];
+            Matrix::Ptr current_y = train_y[t];
+            for (const auto & layer : layers) {
+                current = layer->forwardWithCache(current);
+            }
+            float cost = costFunction->calculate(*current, *current_y);
+            Matrix::Ptr dCurrent = costFunction->derivative(*current, *current_y);
 
-        for (int i = layers.size() - 1; i >= 0; i--) {
-            dCurrent = layers[i]->backward(dCurrent, train_y->getWidth(), learningRate);
-            layers[i]->clearCache();
+            for (int i = layers.size() - 1; i >= 0; i--) {
+                dCurrent = layers[i]->backward(dCurrent, current_y->getWidth(), learningRate);
+                layers[i]->clearCache();
+            }
+            if(train_x.size() > 1) {
+                std::cout << "   Batch " << t << ": loss: " << cost << std::endl;
+            } else {
+                std::cout << "loss: " << cost << " ";
+            }
+            Matrix::Ptr val_predict = predict(val_x[t]);
+            datasetSize += val_x[t]->getWidth();
+            val_loss += costFunction->calculate(*val_predict, *val_y[t]) * val_x[t]->getWidth();
+            val_accuracy += Accuracy::calculate(val_predict, val_y[t]) * val_x[t]->getWidth();
         }
-        std::cout << "Cost on " << k << " epoch: " << cost << "\n";
+        std::cout << "-- val_loss: " << val_loss / datasetSize << " - ";
+        std::cout << "val_accuracy: " << val_accuracy / datasetSize << " ";
+        std::cout << std::endl;
     }
+    std::cout << std::endl;
 }
 
 Matrix::Ptr Model::predict(Matrix::Ptr input) {
@@ -52,16 +76,27 @@ Matrix::Ptr Model::predict(Matrix::Ptr input) {
     return current;
 }
 
-float Model::test(Matrix::Ptr test_x, Matrix::Ptr test_y) {
-    Matrix::Ptr pred = predict(test_x);
-    pred->clip(0.5, 0.5, 0, 1);
-    int correct = 0;
-    for (int i = 0; i < test_y->getWidth(); ++i) {
-        if(abs(test_y->get(0, i) - pred->get(0, i)) < 0.1){
-            correct++;
-        }
+std::vector<Matrix::Ptr> Model::predict(std::vector<Matrix::Ptr> input) {
+    std::vector<Matrix::Ptr> result;
+    for (const auto& matrix : input) {
+        result.push_back(predict(matrix));
     }
-    return (float)correct / test_y->getWidth();
+    return result;
+}
+
+void Model::test(std::vector<Matrix::Ptr> test_x, std::vector<Matrix::Ptr> test_y) {
+    float test_loss = 0;
+    float test_accuracy = 0;
+    int datasetSize = 0;
+    for (int t = 0; t < test_x.size(); ++t) {
+        Matrix::Ptr val_predict = predict(test_x[t]);
+        datasetSize += test_x[t]->getWidth();
+        test_loss += costFunction->calculate(*val_predict, *test_y[t]) * test_y[t]->getWidth();
+        test_accuracy += Accuracy::calculate(val_predict, test_y[t]) * test_y[t]->getWidth();
+    }
+    std::cout << "-- test_loss: " << test_loss / datasetSize << " - ";
+    std::cout << "test_accuracy: " << test_accuracy / datasetSize << " ";
+    std::cout << std::endl;
 }
 
 void Model::serialize(std::string path) {
