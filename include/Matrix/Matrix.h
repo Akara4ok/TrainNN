@@ -8,6 +8,7 @@
 #include "config.hpp"
 #include <map>
 #include <memory>
+#include <vector>
 
 class IMatrixCalculation;
 
@@ -22,6 +23,7 @@ public:
     static void initCalculation();
 
     Matrix(int height, int width);
+    Matrix(float* data, int height, int width);
     Matrix(Matrix& other);
     ~Matrix();
 
@@ -31,7 +33,7 @@ public:
     int getHeight() const;
 
     void setNewDataWithSize(float* new_data, int new_height, int new_width);
-    void randomInit();
+    void randomInit(int h, int w);
     void zeroInit();
 
     friend std::ostream& operator<<(std::ostream& os, Matrix& obj);
@@ -67,6 +69,10 @@ public:
     Matrix::Ptr operator/ (float value);
     void reciprocal ();
     static Matrix::Ptr reciprocal (Matrix& matrix);
+
+    static Matrix::Ptr merge(std::vector<Matrix::Ptr>::iterator begin,
+                             std::vector<Matrix::Ptr>::iterator end,
+                             int axis);
 };
 
 

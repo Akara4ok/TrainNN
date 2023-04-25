@@ -54,13 +54,13 @@ Matrix::Ptr Linear::backward(Matrix::Ptr input, int m, float lr) {
 
 void Linear::updateParams(Matrix::Ptr dW, Matrix::Ptr db, float lr) {
     W = *W - *(*dW * lr);
-//    b = *b - *(*db * lr);
+    b = *b - *(*db * lr);
 }
 
 void Linear::initWeights(int previousHidden) {
     W = std::make_unique<Matrix>(hidden, previousHidden);
     b = std::make_unique<Matrix>(hidden, 1);
-    W->randomInit();
-    W = *W * 0.01;
+    W->randomInit(hidden, previousHidden);
+    //W = *W * 0.01;
     b->zeroInit();
 }

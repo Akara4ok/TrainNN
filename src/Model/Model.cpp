@@ -7,7 +7,7 @@
 #include "Model/Model.h"
 #include "Model/CostFunction/BinaryCrossEntropy.h"
 
-Model::Model() {}
+Model::Model(int inputSize) : inputSize(inputSize) {}
 
 Model::Model(int inputSize, int batchSize) : inputSize(inputSize), batchSize(batchSize) {}
 

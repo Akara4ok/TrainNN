@@ -133,5 +133,8 @@ _deps
 *.ii
 *.gpu
 *.ptx
+
+#
+Data/
 *.cubin
 *.fatbin

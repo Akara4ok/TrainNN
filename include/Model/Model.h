@@ -19,7 +19,7 @@ class Model {
 public:
     typedef std::unique_ptr<Model> Ptr;
 
-    Model();
+    Model(int inputSize);
     Model(int inputSize, int batchSize);
     void add(ILayer::Ptr&& layer);
     void compile(float learningRate, Cost costType);

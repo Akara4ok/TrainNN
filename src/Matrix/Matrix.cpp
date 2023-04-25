@@ -23,6 +23,14 @@ static int initCalculationCaller = []() {
 Matrix::Matrix(int height, int width)
         : height(height), width(width), data(new float[height * width]) {}
 
+Matrix::Matrix(float *data, int height, int width) : data(new float[height * width]), height(height), width(width){
+    for (int i = 0; i < height; ++i) {
+        for (int j = 0; j < width; ++j) {
+            get(i, j) = (data + i * width)[j];
+        }
+    }
+}
+
 Matrix::Matrix(Matrix &other) {
     height = other.getHeight();
     width = other.getWidth();
@@ -60,14 +68,14 @@ void Matrix::setNewDataWithSize(float *new_data, int new_height, int new_width) 
     width = new_width;
 }
 
-void Matrix::randomInit() {
+void Matrix::randomInit(int h, int w) {
     std::random_device rd{};
     std::mt19937 gen{rd()};
-    std::normal_distribution<double> dist{0, 1};
+    std::normal_distribution<double> dist{0, 1 };
 
     for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
-            get(i, j) = dist(gen);
+            get(i, j) = dist(gen) * sqrt(2.0 / w);
         }
     }
 }
@@ -200,4 +208,26 @@ void Matrix::reciprocal() {
 
 Matrix::Ptr Matrix::reciprocal(Matrix &matrix) {
     return calculation[Config::getInstance().getProvider()]->reciprocal(matrix);
+}
+
+Matrix::Ptr Matrix::merge(std::vector<Matrix::Ptr>::iterator begin,
+                          std::vector<Matrix::Ptr>::iterator end,
+                          int axis) {
+    if(axis == 0){
+        int count = std::distance(begin, end);
+        int newHeight = (*begin)->getHeight();
+        int newWidth = (*begin)->getWidth() * count;
+        Matrix::Ptr result(new Matrix(newHeight, newWidth));
+        for (int i = 0; i < newHeight; ++i) {
+            int currentWidth = 0;
+            for (auto it = begin; it != end; ++it) {
+                for (int j = 0; j < (*it)->getWidth(); ++j) {
+                    result->get(i, currentWidth) = (*it)->get(i, j);
+                    currentWidth++;
+                }
+            }
+        }
+        return result;
+    }
+    return Matrix::Ptr();
 }
