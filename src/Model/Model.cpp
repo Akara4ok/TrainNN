@@ -4,12 +4,12 @@
 
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include "Model/Model.h"
+#include "Model/Layer/Linear.h"
 #include "Model/CostFunction/BinaryCrossEntropy.h"
 
 Model::Model(int inputSize) : inputSize(inputSize) {}
-
-Model::Model(int inputSize, int batchSize) : inputSize(inputSize), batchSize(batchSize) {}
 
 void Model::add(ILayer::Ptr&& layer) {
     int previousNeurons = layers.size() == 0 ? inputSize : layers.back()->getHidden();
@@ -21,6 +21,7 @@ void Model::compile(float learningRate, Cost costType) {
     this->learningRate = learningRate;
     switch (costType) {
         case Cost::BinaryCrossEntropy:
+            costType = Cost::BinaryCrossEntropy;
             costFunction = std::make_unique<BinaryCrossEntropy>();
             break;
     }
@@ -61,4 +62,35 @@ float Model::test(Matrix::Ptr test_x, Matrix::Ptr test_y) {
         }
     }
     return (float)correct / test_y->getWidth();
+}
+
+void Model::serialize(std::string path) {
+    std::ofstream file(path);
+
+    file << layers.size() << "\n";
+    file << inputSize << "\n";
+    file << learningRate << " " << costType << "\n";
+
+    for (const auto & layer : layers) {
+        file << "Linear\n";
+        layer->serialize(file);
+    }
+    file.close();
+}
+
+void Model::deserialize(std::string path) {
+    std::ifstream file(path);
+
+    int numOfLayers;
+    file >> numOfLayers;
+    file >> inputSize;
+    file >> learningRate >> costType;
+    compile(learningRate, costType);
+
+    for (int i = 0; i < numOfLayers; ++i) {
+        std::string layerType;
+        file >> layerType;
+        layers.push_back(std::make_unique<Linear>());
+        layers[i]->deserialize(file);
+    }
 }

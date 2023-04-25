@@ -8,10 +8,6 @@
 #include <memory>
 #include "Matrix/Matrix.h"
 
-enum class Cost{
-    BinaryCrossEntropy
-};
-
 class ICostFunction {
 public:
     typedef std::unique_ptr<ICostFunction> Ptr;

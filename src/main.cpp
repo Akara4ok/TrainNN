@@ -6,6 +6,8 @@
 #include <memory>
 #include "config.hpp"
 #include "Matrix/Matrix.h"
+#include "Model/Activation/ActivationTypes.h"
+#include "Model/CostFunction/CostTypes.h"
 #include "Model/CostFunction/BinaryCrossEntropy.h"
 #include "Model/Model.h"
 #include "Model/Layer/Linear.h"
@@ -67,14 +69,17 @@ int main(){
                                                              64, 42, 57));
     Matrix::Ptr x = dataset->getData()[0];
     Matrix::Ptr y = dataset->getLabel()[0];
-    Model::Ptr model(new Model(64 * 64, 32));
-    model->add(std::make_unique<Linear>(20, Activation::Relu));
-    model->add(std::make_unique<Linear>(7, Activation::Relu));
-    model->add(std::make_unique<Linear>(5, Activation::Relu));
-    model->add(std::make_unique<Linear>(1, Activation::Sigmoid));
-    model->compile(0.005, Cost::BinaryCrossEntropy);
-    model->train(5000, x, y, x, y);
+    Model::Ptr model(new Model());
+//    Model::Ptr model(new Model(64 * 64));
+//    model->add(std::make_unique<Linear>(20, Activation::Relu));
+//    model->add(std::make_unique<Linear>(7, Activation::Relu));
+//    model->add(std::make_unique<Linear>(5, Activation::Relu));
+//    model->add(std::make_unique<Linear>(1, Activation::Sigmoid));
+//    model->compile(0.005, Cost::BinaryCrossEntropy);
+//    model->serialize("../Models/model.txt");
+    model->deserialize("../Models/model.txt");
+////    model->train(5000, x, y, x, y);
     auto pred = model->predict(x);
     std::cout << *pred;
-    std::cout << model->test(x, y);
+//    std::cout << model->test(x, y);
 }

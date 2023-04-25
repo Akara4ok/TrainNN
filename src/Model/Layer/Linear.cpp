@@ -2,12 +2,13 @@
 // Created by vlad on 4/24/23.
 //
 #include <iostream>
+#include <fstream>
 
 #include "Model/Layer/Linear.h"
 #include "Model/Activation/SigmoidActivation.h"
 #include "Model/Activation/ReluActivation.h"
 
-Linear::Linear(int hidden, Activation type) : hidden(hidden) {
+Linear::Linear(int hidden, Activation type) : hidden(hidden), activationType(type) {
     switch (type) {
         case Activation::Relu:
             activation = std::make_unique<ReluActivation>();
@@ -57,10 +58,46 @@ void Linear::updateParams(Matrix::Ptr dW, Matrix::Ptr db, float lr) {
     b = *b - *(*db * lr);
 }
 
+void Linear::createNewWeights(int previousHidden) {
+    W = std::make_unique<Matrix>(hidden, previousHidden);
+    b = std::make_unique<Matrix>(hidden, 1);
+}
+
 void Linear::initWeights(int previousHidden) {
     W = std::make_unique<Matrix>(hidden, previousHidden);
     b = std::make_unique<Matrix>(hidden, 1);
     W->randomInit(hidden, previousHidden);
-    //W = *W * 0.01;
     b->zeroInit();
+}
+
+void Linear::serialize(std::ofstream& file) {
+    file << hidden << " " << W->getWidth() << " " << activationType << "\n";
+    for (int i = 0; i < W->getHeight(); ++i) {
+        for (int j = 0; j < W->getWidth(); ++j) {
+            file << W->get(i, j) << " ";
+        }
+        file << b->get(i, 0) << "\n";
+    }
+}
+
+void Linear::deserialize(std::ifstream &file) {
+    int previousHidden;
+    file >> hidden >> previousHidden >> activationType;
+    W = std::make_unique<Matrix>(hidden, previousHidden);
+    b = std::make_unique<Matrix>(hidden, 1);
+    switch (activationType) {
+        case Activation::Relu:
+            activation = std::make_unique<ReluActivation>();
+            break;
+        case Activation::Sigmoid:
+            activation = std::make_unique<SigmoidActivation>();
+            break;
+    }
+
+    for (int i = 0; i < W->getHeight(); ++i) {
+        for (int j = 0; j < W->getWidth(); ++j) {
+            file >> W->get(i, j);
+        }
+        file >> b->get(i, 0);
+    }
 }

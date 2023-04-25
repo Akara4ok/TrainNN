@@ -8,11 +8,6 @@
 #include <memory>
 #include "Matrix/Matrix.h"
 
-enum class Activation{
-    Relu,
-    Sigmoid
-};
-
 class IActivation {
 public:
     typedef std::unique_ptr<IActivation> Ptr;
