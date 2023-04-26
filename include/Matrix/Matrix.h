@@ -22,83 +22,93 @@ public:
 
     static void initCalculation();
 
+    Matrix();
+
     Matrix(int height, int width);
 
-    Matrix(float* data, int height, int width);
+    Matrix(const float* data, int height, int width);
 
-    Matrix(Matrix& other);
+    Matrix(const Matrix& other);
+
+    Matrix(Matrix&& other) noexcept;
+
+    Matrix& operator=(Matrix&& other);
 
     ~Matrix();
 
-    float& get(int index);
-
     float& get(int rowIndex, int colIndex);
 
-    int getWidth() const;
+    [[nodiscard]] float get(int rowIndex, int colIndex) const;
 
-    int getHeight() const;
+    [[nodiscard]] int getWidth() const;
+
+    [[nodiscard]] int getHeight() const;
 
     void setNewDataWithSize(float* new_data, int new_height, int new_width);
 
-    void randomInit(int h, int w);
+    void randomInit(int w);
 
     void zeroInit();
 
-    friend std::ostream& operator<<(std::ostream& os, Matrix& obj);
+    friend std::ostream& operator<<(std::ostream& os, const Matrix& obj);
 
-    float sum();
+    [[nodiscard]] float sum() const;
 
-    static Matrix::Ptr sum(Matrix& matrix, int axis);
+    static Matrix sum(const Matrix& matrix, int axis);
 
-    static Matrix::Ptr multiply(Matrix& lhs, Matrix& rhs);
+    static Matrix multiply(const Matrix& lhs, const Matrix& rhs);
 
     void exp();
 
-    static Matrix::Ptr exp(Matrix& matrix);
+    static Matrix exp(const Matrix& matrix);
 
     void log();
 
-    static Matrix::Ptr log(Matrix& matrix);
+    static Matrix log(const Matrix& matrix);
 
     void transpose();
 
-    static Matrix::Ptr transpose(Matrix& matrix);
+    static Matrix transpose(const Matrix& matrix);
 
     void clip(float minBound, float maxBound,
               float minValueToSet, float maxValueToSet);
 
-    static Matrix::Ptr clip(Matrix& matrix,
-                            float minBound, float maxBound,
-                            float minValueToSet, float maxValueToSet);
+    static Matrix clip(const Matrix& matrix,
+                       float minBound, float maxBound,
+                       float minValueToSet, float maxValueToSet);
 
-    Matrix::Ptr operator+(Matrix& rhs);
+    Matrix operator+(const Matrix& rhs) const;
 
-    Matrix::Ptr operator+(float value);
+    Matrix operator+(float value) const;
 
-    Matrix::Ptr operator-();
+    Matrix operator-() const;
 
-    Matrix::Ptr operator-(Matrix& rhs);
+    Matrix operator-(const Matrix& rhs) const;
 
-    Matrix::Ptr operator-(float value);
+    Matrix operator-(float value) const;
 
-    Matrix::Ptr operator*(Matrix& rhs);
+    Matrix operator*(const Matrix& rhs) const;
 
-    Matrix::Ptr operator*(float value);
+    Matrix operator*(float value) const;
 
-    Matrix::Ptr operator/(Matrix& rhs);
+    Matrix operator/(const Matrix& rhs) const;
 
-    Matrix::Ptr operator/(float value);
+    Matrix operator/(float value) const;
+
+    float* operator[](int index);
+
+    float* operator[](int index) const;
 
     void reciprocal();
 
-    static Matrix::Ptr reciprocal(Matrix& matrix);
+    static Matrix reciprocal(const Matrix& matrix);
 
     static Matrix::Ptr merge(std::vector<Matrix::Ptr>::iterator begin,
                              std::vector<Matrix::Ptr>::iterator end,
                              int axis);
 
 
-    static Matrix::Ptr argmax(Matrix& matrix, int axis);
+    static Matrix argmax(const Matrix& matrix, int axis);
 };
 
 

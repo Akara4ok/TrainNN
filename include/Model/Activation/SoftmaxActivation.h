@@ -11,9 +11,9 @@ class SoftmaxActivation : public IActivation {
 public:
     typedef std::unique_ptr<SoftmaxActivation> Ptr;
 
-    Matrix::Ptr calculate(Matrix& matrix) override;
+    Matrix calculate(const Matrix& matrix) override;
 
-    Matrix::Ptr derivative(Matrix& X, Matrix& dA) override;
+    Matrix derivative(const Matrix& X, const Matrix& dA) override;
 };
 
 

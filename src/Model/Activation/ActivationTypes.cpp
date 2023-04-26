@@ -20,7 +20,7 @@ std::ostream& operator<<(std::ostream& os, const Activation& other) {
             break;
     }
     return os;
-};
+}
 
 std::istream& operator>>(std::istream& is, Activation& type) {
     std::string input;
@@ -33,4 +33,4 @@ std::istream& operator>>(std::istream& is, Activation& type) {
         type = Activation::Softmax;
     }
     return is;
-};
+}

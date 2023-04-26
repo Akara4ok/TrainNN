@@ -15,13 +15,13 @@ public:
 
     virtual void clearCache() = 0;
 
-    virtual Matrix::Ptr forward(Matrix& input) = 0;
+    virtual Matrix forward(const Matrix& input) = 0;
 
-    virtual Matrix::Ptr forwardWithCache(Matrix& input) = 0;
+    virtual Matrix forwardWithCache(const Matrix& input) = 0;
 
-    virtual Matrix::Ptr backward(Matrix&, int m, float lr) = 0;
+    virtual Matrix backward(const Matrix&, int m, float lr) = 0;
 
-    virtual void updateParams(Matrix& dW, Matrix& db, float lr) = 0;
+    virtual void updateParams(const Matrix& dW, const Matrix& db, float lr) = 0;
 
     virtual void createNewWeights(int previousHidden) = 0;
 

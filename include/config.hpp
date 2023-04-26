@@ -13,7 +13,7 @@ enum class Provider {
 class Config {
     Provider provider = Provider::CPU;
 
-    Config() {};
+    Config() = default;
 
 public:
     Config(Config& other) = delete;

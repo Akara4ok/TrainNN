@@ -12,11 +12,11 @@
 #include "Model/Activation/IActivation.h"
 
 class Linear : public ILayer {
-    Matrix::Ptr W;
-    Matrix::Ptr b;
-    std::vector<Matrix::Ptr> cache; //A[l-1], x, A[l]
-    int hidden;
-    Activation activationType;
+    Matrix W;
+    Matrix b;
+    std::vector<Matrix> cache; //A[l-1], x, A[l]
+    int hidden{};
+    Activation activationType{};
     IActivation::Ptr activation;
 public:
     typedef std::unique_ptr<Linear> Ptr;
@@ -29,13 +29,13 @@ public:
 
     void clearCache() override;
 
-    Matrix::Ptr forward(Matrix& input) override;
+    Matrix forward(const Matrix& input) override;
 
-    Matrix::Ptr forwardWithCache(Matrix& input) override;
+    Matrix forwardWithCache(const Matrix& input) override;
 
-    Matrix::Ptr backward(Matrix& input, int m, float lr) override;
+    Matrix backward(const Matrix& input, int m, float lr) override;
 
-    void updateParams(Matrix& dW, Matrix& db, float lr) override;
+    void updateParams(const Matrix& dW, const Matrix& db, float lr) override;
 
     void createNewWeights(int previousHidden) override;
 

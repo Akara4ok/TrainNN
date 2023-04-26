@@ -11,9 +11,9 @@ class SigmoidActivation : public IActivation {
 public:
     typedef std::unique_ptr<SigmoidActivation> Ptr;
 
-    Matrix::Ptr calculate(Matrix& matrix) override;
+    Matrix calculate(const Matrix& matrix) override;
 
-    Matrix::Ptr derivative(Matrix& X, Matrix& dA) override;
+    Matrix derivative(const Matrix& X, const Matrix& dA) override;
 };
 
 #endif //CMAKE_AND_CUDA_SIGMOIDACTIVATION_H

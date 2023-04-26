@@ -16,7 +16,7 @@ std::ostream& operator<<(std::ostream& os, const Cost& other) {
             break;
     }
     return os;
-};
+}
 
 std::istream& operator>>(std::istream& is, Cost& type) {
     std::string input;
@@ -27,4 +27,4 @@ std::istream& operator>>(std::istream& is, Cost& type) {
         type = Cost::CrossEntropy;
     }
     return is;
-};
+}

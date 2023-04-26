@@ -13,9 +13,9 @@ class IActivation {
 public:
     typedef std::unique_ptr<IActivation> Ptr;
 
-    virtual Matrix::Ptr calculate(Matrix& matrix) = 0;
+    virtual Matrix calculate(const Matrix& matrix) = 0;
 
-    virtual Matrix::Ptr derivative(Matrix& X, Matrix& dA) = 0;
+    virtual Matrix derivative(const Matrix& X, const Matrix& dA) = 0;
 
     virtual ~IActivation() = default;
 };

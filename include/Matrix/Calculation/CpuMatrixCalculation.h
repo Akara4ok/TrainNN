@@ -12,28 +12,28 @@ class CpuMatrixCalculation : public IMatrixCalculation {
 public:
     typedef std::unique_ptr<CpuMatrixCalculation> Ptr;
 
-    std::shared_ptr<Matrix> sum(Matrix& matrix, int axis) override;
+    Matrix sum(const Matrix& matrix, int axis) override;
 
-    std::shared_ptr<Matrix> multiply(Matrix& lhs, Matrix& rhs) override;
+    Matrix multiply(const Matrix& lhs, const Matrix& rhs) override;
 
-    std::shared_ptr<Matrix> exp(Matrix& matrix) override;
+    Matrix exp(const Matrix& matrix) override;
 
     void exp_inline(Matrix& matrix) override;
 
-    std::shared_ptr<Matrix> log(Matrix& matrix) override;
+    Matrix log(const Matrix& matrix) override;
 
     void log_inline(Matrix& matrix) override;
 
-    std::shared_ptr<Matrix> transpose(Matrix& matrix) override;
+    Matrix transpose(const Matrix& matrix) override;
 
     void transpose_inline(Matrix& matrix) override;
 
-    std::shared_ptr<Matrix> elementWiseMultiply(Matrix& lhs, Matrix& rhs) override;
+    Matrix elementWiseMultiply(const Matrix& lhs, const Matrix& rhs) override;
 
-    std::shared_ptr<Matrix> elementWiseDivide(Matrix& lhs, Matrix& rhs) override;
+    Matrix elementWiseDivide(const Matrix& lhs, const Matrix& rhs) override;
 
-    std::shared_ptr<Matrix>
-    clip(Matrix& matrix,
+    Matrix
+    clip(const Matrix& matrix,
          float minBound, float maxBound,
          float minValueToSet, float maxValueToSet) override;
 
@@ -41,15 +41,15 @@ public:
                      float minBound, float maxBound,
                      float minValueToSet, float maxValueToSet) override;
 
-    std::shared_ptr<Matrix> sum(Matrix& lhs, Matrix& rhs) override;
+    Matrix sum(const Matrix& lhs, const Matrix& rhs) override;
 
-    std::shared_ptr<Matrix> subtract(Matrix& lhs, Matrix& rhs) override;
+    Matrix subtract(const Matrix& lhs, const Matrix& rhs) override;
 
-    std::shared_ptr<Matrix> reciprocal(Matrix& matrix) override;
+    Matrix reciprocal(const Matrix& matrix) override;
 
     void reciprocal_inline(Matrix& matrix) override;
 
-    std::shared_ptr<Matrix> argmax(Matrix& matrix, int axis) override;
+    Matrix argmax(const Matrix& matrix, int axis) override;
 };
 
 

@@ -11,9 +11,9 @@
 #include "Model/CostFunction/ICostFunction.h"
 
 class Model {
-    int inputSize;
-    float learningRate;
-    Cost costType;
+    int inputSize{};
+    float learningRate{};
+    Cost costType{};
     ICostFunction::Ptr costFunction;
     std::vector<ILayer::Ptr> layers;
 public:
@@ -25,21 +25,21 @@ public:
 
     void add(ILayer::Ptr&& layer);
 
-    void compile(float learningRate, Cost costType);
+    void compile(float learningRate_, Cost costType_);
 
     void train(int epochs,
                const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
                const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y);
 
-    Matrix::Ptr predict(Matrix::Ptr input);
+    Matrix predict(const Matrix& input);
 
-    std::vector<Matrix::Ptr> predict(std::vector<Matrix::Ptr> input);
+    std::vector<Matrix::Ptr> predict(const std::vector<Matrix::Ptr>& input);
 
     void test(std::vector<Matrix::Ptr> test_x, std::vector<Matrix::Ptr> test_y);
 
-    void serialize(std::string path);
+    void serialize(const std::string& path);
 
-    void deserialize(std::string path);
+    void deserialize(const std::string& path);
 };
 
 
