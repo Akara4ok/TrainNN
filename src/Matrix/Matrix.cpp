@@ -23,7 +23,7 @@ static int initCalculationCaller = []() {
 Matrix::Matrix(int height, int width)
         : height(height), width(width), data(new float[height * width]) {}
 
-Matrix::Matrix(float *data, int height, int width) : data(new float[height * width]), height(height), width(width){
+Matrix::Matrix(float* data, int height, int width) : data(new float[height * width]), height(height), width(width) {
     for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
             get(i, j) = (data + i * width)[j];
@@ -31,7 +31,7 @@ Matrix::Matrix(float *data, int height, int width) : data(new float[height * wid
     }
 }
 
-Matrix::Matrix(Matrix &other) {
+Matrix::Matrix(Matrix& other) {
     height = other.getHeight();
     width = other.getWidth();
     data = new float[height * width];
@@ -49,6 +49,7 @@ Matrix::~Matrix() {
 float& Matrix::get(int index) {
     return (data + index)[0];
 }
+
 float& Matrix::get(int rowIndex, int colIndex) {
     return (data + rowIndex * width)[colIndex];
 }
@@ -61,7 +62,7 @@ int Matrix::getHeight() const {
     return height;
 }
 
-void Matrix::setNewDataWithSize(float *new_data, int new_height, int new_width) {
+void Matrix::setNewDataWithSize(float* new_data, int new_height, int new_width) {
     delete[] data;
     data = new_data;
     height = new_height;
@@ -71,7 +72,7 @@ void Matrix::setNewDataWithSize(float *new_data, int new_height, int new_width) 
 void Matrix::randomInit(int h, int w) {
     std::random_device rd{};
     std::mt19937 gen{rd()};
-    std::normal_distribution<double> dist{0, 1 };
+    std::normal_distribution<double> dist{0, 1};
 
     for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
@@ -88,18 +89,18 @@ void Matrix::zeroInit() {
     }
 }
 
-std::ostream &operator<<(std::ostream& os, Matrix& matrix) {
+std::ostream& operator<<(std::ostream& os, Matrix& matrix) {
     os << "[";
     for (int i = 0; i < matrix.height; ++i) {
         os << "[";
         for (int j = 0; j < matrix.width; ++j) {
             os << matrix.get(i, j);
-            if(j != matrix.width - 1){
+            if (j != matrix.width - 1) {
                 os << " ";
             }
         }
         os << "]";
-        if(i != matrix.height - 1){
+        if (i != matrix.height - 1) {
             os << "\n ";
         }
     }
@@ -150,13 +151,13 @@ void Matrix::clip(float minBound, float maxBound, float minValueToSet, float max
                                                                   minValueToSet, maxValueToSet);
 }
 
-Matrix::Ptr Matrix::clip(Matrix &matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
+Matrix::Ptr Matrix::clip(Matrix& matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
     return calculation[Config::getInstance().getProvider()]->clip(matrix,
                                                                   minBound, maxBound,
                                                                   minValueToSet, maxValueToSet);
 }
 
-Matrix::Ptr Matrix::operator+(Matrix &rhs) {
+Matrix::Ptr Matrix::operator+(Matrix& rhs) {
     return calculation[Config::getInstance().getProvider()]->sum(*this, rhs);
 }
 
@@ -172,7 +173,7 @@ Matrix::Ptr Matrix::operator-() {
     return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
 }
 
-Matrix::Ptr Matrix::operator-(Matrix &rhs) {
+Matrix::Ptr Matrix::operator-(Matrix& rhs) {
     return calculation[Config::getInstance().getProvider()]->subtract(*this, rhs);
 }
 
@@ -182,7 +183,7 @@ Matrix::Ptr Matrix::operator-(float value) {
     return calculation[Config::getInstance().getProvider()]->subtract(*this, matrix);
 }
 
-Matrix::Ptr Matrix::operator*(Matrix &rhs) {
+Matrix::Ptr Matrix::operator*(Matrix& rhs) {
     return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, rhs);
 }
 
@@ -192,7 +193,7 @@ Matrix::Ptr Matrix::operator*(float value) {
     return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
 }
 
-Matrix::Ptr Matrix::operator/(Matrix &rhs) {
+Matrix::Ptr Matrix::operator/(Matrix& rhs) {
     return calculation[Config::getInstance().getProvider()]->elementWiseDivide(*this, rhs);
 }
 
@@ -206,14 +207,14 @@ void Matrix::reciprocal() {
     calculation[Config::getInstance().getProvider()]->reciprocal_inline(*this);
 }
 
-Matrix::Ptr Matrix::reciprocal(Matrix &matrix) {
+Matrix::Ptr Matrix::reciprocal(Matrix& matrix) {
     return calculation[Config::getInstance().getProvider()]->reciprocal(matrix);
 }
 
 Matrix::Ptr Matrix::merge(std::vector<Matrix::Ptr>::iterator begin,
                           std::vector<Matrix::Ptr>::iterator end,
                           int axis) {
-    if(axis == 0){
+    if (axis == 0) {
         int count = std::distance(begin, end);
         int newHeight = (*begin)->getHeight();
         int newWidth = (*begin)->getWidth() * count;
@@ -230,4 +231,8 @@ Matrix::Ptr Matrix::merge(std::vector<Matrix::Ptr>::iterator begin,
         return result;
     }
     return Matrix::Ptr();
+}
+
+Matrix::Ptr Matrix::argmax(Matrix& matrix, int axis) {
+    return calculation[Config::getInstance().getProvider()]->argmax(matrix, axis);
 }

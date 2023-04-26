@@ -8,12 +8,14 @@
 #include <fstream>
 #include <string>
 
-enum class Activation{
+enum class Activation {
     Relu,
-    Sigmoid
+    Sigmoid,
+    Softmax
 };
 
 std::ostream& operator<<(std::ostream& os, const Activation& other);
-std::istream& operator>> (std::istream& is, Activation& type);
+
+std::istream& operator>>(std::istream& is, Activation& type);
 
 #endif //CMAKE_AND_CUDA_ACTIVATIONTYPES_H

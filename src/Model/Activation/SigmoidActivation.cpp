@@ -10,8 +10,9 @@ Matrix::Ptr SigmoidActivation::calculate(Matrix& matrix) {
     return result;
 }
 
-Matrix::Ptr SigmoidActivation::derivative(Matrix &matrix) {
-    Matrix::Ptr sigmoid = calculate(matrix);
+Matrix::Ptr SigmoidActivation::derivative(Matrix& X, Matrix& dA) {
+    Matrix::Ptr sigmoid = calculate(X);
     Matrix::Ptr negativeSigmoid = -(*sigmoid);
-    return (*sigmoid) * (*(*negativeSigmoid + 1));
+    Matrix::Ptr dSigmoid = (*sigmoid) * (*(*negativeSigmoid + 1));
+    return dA * *dSigmoid;
 }

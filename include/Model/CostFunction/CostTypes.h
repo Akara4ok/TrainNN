@@ -7,12 +7,13 @@
 
 #include <fstream>
 
-enum class Cost{
-    BinaryCrossEntropy
+enum class Cost {
+    BinaryCrossEntropy,
+    CrossEntropy
 };
 
 std::ostream& operator<<(std::ostream& os, const Cost& other);
 
-std::istream& operator>> (std::istream& is, Cost& type);
+std::istream& operator>>(std::istream& is, Cost& type);
 
 #endif //CMAKE_AND_CUDA_COSTTYPES_H

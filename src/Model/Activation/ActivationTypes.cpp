@@ -5,14 +5,16 @@
 
 #include "Model/Activation/ActivationTypes.h"
 
-std::ostream &operator<<(std::ostream &os, const Activation &other){
-    switch (other)
-    {
+std::ostream& operator<<(std::ostream& os, const Activation& other) {
+    switch (other) {
         case Activation::Relu:
             os << "Relu";
             break;
         case Activation::Sigmoid:
             os << "Sigmoid";
+            break;
+        case Activation::Softmax:
+            os << "SoftmaxActivation";
             break;
         default:
             break;
@@ -20,14 +22,15 @@ std::ostream &operator<<(std::ostream &os, const Activation &other){
     return os;
 };
 
-std::istream &operator>>(std::istream &is, Activation &type)
-{
+std::istream& operator>>(std::istream& is, Activation& type) {
     std::string input;
     is >> input;
-    if(input == "Relu") {
+    if (input == "Relu") {
         type = Activation::Relu;
     } else if (input == "Sigmoid") {
         type = Activation::Sigmoid;
+    } else if (input == "SoftmaxActivation") {
+        type = Activation::Softmax;
     }
     return is;
 };

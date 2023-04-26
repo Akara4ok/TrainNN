@@ -14,7 +14,9 @@ class ImageFlattenDataset : public Dataset {
 public:
     ImageFlattenDataset(std::string folderPath, int imageHeight, int imageWidth, int batchSize = -1,
                         int fixedSize = -1, int seed = 42);
+
     Matrix::Ptr preprocessImage(std::string imagePath) override;
+
     Matrix::Ptr preprocessLabel(std::string imagePath) override;
 };
 

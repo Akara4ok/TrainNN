@@ -7,12 +7,13 @@
 
 #include "IActivation.h"
 
-class ReluActivation : public IActivation{
+class ReluActivation : public IActivation {
 public:
     typedef std::unique_ptr<ReluActivation> Ptr;
 
     Matrix::Ptr calculate(Matrix& matrix) override;
-    Matrix::Ptr derivative(Matrix &matrix) override;
+
+    Matrix::Ptr derivative(Matrix& X, Matrix& dA) override;
 };
 
 #endif //CMAKE_AND_CUDA_RELUACTIVATION_H

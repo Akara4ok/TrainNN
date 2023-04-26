@@ -7,6 +7,7 @@
 #include "Model/Layer/Linear.h"
 #include "Model/Activation/SigmoidActivation.h"
 #include "Model/Activation/ReluActivation.h"
+#include "Model/Activation/SoftmaxActivation.h"
 
 Linear::Linear(int hidden, Activation type) : hidden(hidden), activationType(type) {
     switch (type) {
@@ -15,6 +16,9 @@ Linear::Linear(int hidden, Activation type) : hidden(hidden), activationType(typ
             break;
         case Activation::Sigmoid:
             activation = std::make_unique<SigmoidActivation>();
+            break;
+        case Activation::Softmax:
+            activation = std::make_unique<SoftmaxActivation>();
             break;
     }
 }
@@ -27,16 +31,16 @@ void Linear::clearCache() {
     cache.clear();
 }
 
-Matrix::Ptr Linear::forward(Matrix::Ptr input) {
-    Matrix::Ptr x = Matrix::multiply(*W, *input);
+Matrix::Ptr Linear::forward(Matrix& input) {
+    Matrix::Ptr x = Matrix::multiply(*W, input);
     x = *x + *b;
     x = activation->calculate(*x);
     return x;
 }
 
-Matrix::Ptr Linear::forwardWithCache(Matrix::Ptr input) {
-    cache.push_back(Matrix::transpose(*input));
-    Matrix::Ptr x = Matrix::multiply(*W, *input);
+Matrix::Ptr Linear::forwardWithCache(Matrix& input) {
+    cache.push_back(Matrix::transpose(input));
+    Matrix::Ptr x = Matrix::multiply(*W, input);
     x = *x + *b;
     cache.push_back(x);
     x = activation->calculate(*x);
@@ -44,18 +48,20 @@ Matrix::Ptr Linear::forwardWithCache(Matrix::Ptr input) {
     return x;
 }
 
-Matrix::Ptr Linear::backward(Matrix::Ptr input, int m, float lr) {
-    Matrix::Ptr dx = *input * *activation->derivative(*cache[1]);
+Matrix::Ptr Linear::backward(Matrix& input, int m, float lr) {
+    Matrix::Ptr dx = activation->derivative(*cache[1], input);
+//    std::cout << *dx;
+//    getchar();
     Matrix::Ptr dW = *Matrix::multiply(*dx, *cache[0]) / m;
     Matrix::Ptr db = *Matrix::sum(*dx, 0) / m;
     Matrix::Ptr output = Matrix::multiply(*Matrix::transpose(*W), *dx);
-    updateParams(dW, db, lr);
+    updateParams(*dW, *db, lr);
     return output;
 }
 
-void Linear::updateParams(Matrix::Ptr dW, Matrix::Ptr db, float lr) {
-    W = *W - *(*dW * lr);
-    b = *b - *(*db * lr);
+void Linear::updateParams(Matrix& dW, Matrix& db, float lr) {
+    W = *W - *(dW * lr);
+    b = *b - *(db * lr);
 }
 
 void Linear::createNewWeights(int previousHidden) {
@@ -80,7 +86,7 @@ void Linear::serialize(std::ofstream& file) {
     }
 }
 
-void Linear::deserialize(std::ifstream &file) {
+void Linear::deserialize(std::ifstream& file) {
     int previousHidden;
     file >> hidden >> previousHidden >> activationType;
     W = std::make_unique<Matrix>(hidden, previousHidden);

@@ -9,7 +9,7 @@
 #include <vector>
 #include "Matrix/Matrix.h"
 
-enum class DatasetType{
+enum class DatasetType {
     Train,
     Inference
 };
@@ -27,10 +27,15 @@ public:
     typedef std::unique_ptr<Dataset> Ptr;
 
     Dataset(std::string folderPath, int batchSize, int seed);
+
     std::vector<Matrix::Ptr> getData();
+
     std::vector<Matrix::Ptr> getLabel();
+
     virtual Matrix::Ptr preprocessImage(std::string imagePath) = 0;
+
     virtual Matrix::Ptr preprocessLabel(std::string imagePath) = 0;
+
     virtual ~Dataset() = default;
 };
 

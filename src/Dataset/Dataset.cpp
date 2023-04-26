@@ -5,7 +5,7 @@
 #include "Dataset/Dataset.h"
 
 Dataset::Dataset(std::string folderPath, int batchSize, int seed)
-    : folderPath(folderPath), batchSize(batchSize), seed(seed) {
+        : folderPath(folderPath), batchSize(batchSize), seed(seed) {
 
 }
 

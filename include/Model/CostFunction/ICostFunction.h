@@ -14,7 +14,9 @@ public:
     typedef std::unique_ptr<ICostFunction> Ptr;
 
     virtual float calculate(Matrix& YHat, Matrix& Y) = 0;
+
     virtual Matrix::Ptr derivative(Matrix& YHat, Matrix& Y) = 0;
+
     virtual ~ICostFunction() = default;
 };
 

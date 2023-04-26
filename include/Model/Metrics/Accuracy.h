@@ -8,8 +8,10 @@
 #include "Matrix/Matrix.h"
 
 class Accuracy {
+    static float calculateBinary(Matrix& pred_y, Matrix& test_y);
+    static float calculateMultiClass(Matrix& pred_y, Matrix& test_y);
 public:
-    static float calculate(Matrix::Ptr pred_y, Matrix::Ptr test_y);
+    static float calculate(Matrix& pred_y, Matrix& test_y);
 };
 
 

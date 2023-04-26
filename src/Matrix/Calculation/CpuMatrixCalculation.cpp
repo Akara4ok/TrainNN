@@ -2,12 +2,12 @@
 // Created by vlad on 4/23/23.
 //
 
-#include <math.h>
+#include <cmath>
 #include "Matrix/Matrix.h"
 #include "Matrix/Calculation/CpuMatrixCalculation.h"
 
-Matrix::Ptr CpuMatrixCalculation::sum(Matrix &matrix, int axis) {
-    if(axis == -1){
+Matrix::Ptr CpuMatrixCalculation::sum(Matrix& matrix, int axis) {
+    if (axis == -1) {
         Matrix::Ptr result(new Matrix(1, 1));
         float sum = 0;
         for (int i = 0; i < matrix.getHeight(); ++i) {
@@ -18,7 +18,7 @@ Matrix::Ptr CpuMatrixCalculation::sum(Matrix &matrix, int axis) {
         result->get(0, 0) = sum;
         return result;
     }
-    if(axis == 0){
+    if (axis == 0) {
         Matrix::Ptr result(new Matrix(matrix.getHeight(), 1));
         for (int i = 0; i < matrix.getHeight(); ++i) {
             float sum = 0;
@@ -29,7 +29,7 @@ Matrix::Ptr CpuMatrixCalculation::sum(Matrix &matrix, int axis) {
         }
         return result;
     }
-    if(axis == 1){
+    if (axis == 1) {
         Matrix::Ptr result(new Matrix(1, matrix.getWidth()));
         for (int i = 0; i < matrix.getWidth(); ++i) {
             float sum = 0;
@@ -40,10 +40,10 @@ Matrix::Ptr CpuMatrixCalculation::sum(Matrix &matrix, int axis) {
         }
         return result;
     }
-    return Matrix::Ptr();
+    return {};
 }
 
-Matrix::Ptr CpuMatrixCalculation::multiply(Matrix &lhs, Matrix &rhs) {
+Matrix::Ptr CpuMatrixCalculation::multiply(Matrix& lhs, Matrix& rhs) {
     Matrix::Ptr result(new Matrix(lhs.getHeight(), rhs.getWidth()));
     for (int i = 0; i < lhs.getHeight(); ++i) {
         for (int j = 0; j < rhs.getWidth(); ++j) {
@@ -57,7 +57,7 @@ Matrix::Ptr CpuMatrixCalculation::multiply(Matrix &lhs, Matrix &rhs) {
     return result;
 }
 
-Matrix::Ptr CpuMatrixCalculation::exp(Matrix &matrix) {
+Matrix::Ptr CpuMatrixCalculation::exp(Matrix& matrix) {
     Matrix::Ptr result(new Matrix(matrix.getHeight(), matrix.getWidth()));
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
@@ -75,7 +75,7 @@ void CpuMatrixCalculation::exp_inline(Matrix& matrix) {
     }
 }
 
-Matrix::Ptr CpuMatrixCalculation::log(Matrix &matrix) {
+Matrix::Ptr CpuMatrixCalculation::log(Matrix& matrix) {
     Matrix::Ptr result(new Matrix(matrix.getHeight(), matrix.getWidth()));
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
@@ -85,7 +85,7 @@ Matrix::Ptr CpuMatrixCalculation::log(Matrix &matrix) {
     return result;
 }
 
-void CpuMatrixCalculation::log_inline(Matrix &matrix) {
+void CpuMatrixCalculation::log_inline(Matrix& matrix) {
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
             matrix.get(i, j) = logf(matrix.get(i, j));
@@ -93,7 +93,7 @@ void CpuMatrixCalculation::log_inline(Matrix &matrix) {
     }
 }
 
-Matrix::Ptr CpuMatrixCalculation::transpose(Matrix &matrix) {
+Matrix::Ptr CpuMatrixCalculation::transpose(Matrix& matrix) {
     Matrix::Ptr result(new Matrix(matrix.getWidth(), matrix.getHeight()));
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
@@ -104,7 +104,7 @@ Matrix::Ptr CpuMatrixCalculation::transpose(Matrix &matrix) {
 }
 
 void CpuMatrixCalculation::transpose_inline(Matrix& matrix) {
-    float* new_data = new float[matrix.getHeight() * matrix.getWidth()];
+    auto* new_data = new float[matrix.getHeight() * matrix.getWidth()];
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
             (new_data + j * matrix.getHeight())[i] = matrix.get(i, j);
@@ -113,7 +113,7 @@ void CpuMatrixCalculation::transpose_inline(Matrix& matrix) {
     matrix.setNewDataWithSize(new_data, matrix.getWidth(), matrix.getHeight());
 }
 
-Matrix::Ptr CpuMatrixCalculation::elementWiseMultiply(Matrix &lhs, Matrix &rhs) {
+Matrix::Ptr CpuMatrixCalculation::elementWiseMultiply(Matrix& lhs, Matrix& rhs) {
     Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
 
     for (int i = 0; i < lhs.getHeight(); ++i) {
@@ -127,7 +127,7 @@ Matrix::Ptr CpuMatrixCalculation::elementWiseMultiply(Matrix &lhs, Matrix &rhs) 
     return result;
 }
 
-Matrix::Ptr CpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Matrix &rhs) {
+Matrix::Ptr CpuMatrixCalculation::elementWiseDivide(Matrix& lhs, Matrix& rhs) {
     Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
 
     for (int i = 0; i < lhs.getHeight(); ++i) {
@@ -142,15 +142,15 @@ Matrix::Ptr CpuMatrixCalculation::elementWiseDivide(Matrix &lhs, Matrix &rhs) {
 }
 
 Matrix::Ptr
-CpuMatrixCalculation::clip(Matrix &matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
+CpuMatrixCalculation::clip(Matrix& matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
     Matrix::Ptr result(new Matrix(matrix));
 
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
-            if(result->get(i, j) < minBound){
+            if (result->get(i, j) < minBound) {
                 result->get(i, j) = minValueToSet;
             }
-            if(result->get(i, j) > maxBound){
+            if (result->get(i, j) > maxBound) {
                 result->get(i, j) = maxValueToSet;
             }
         }
@@ -158,21 +158,21 @@ CpuMatrixCalculation::clip(Matrix &matrix, float minBound, float maxBound, float
     return result;
 }
 
-void CpuMatrixCalculation::clip_inline(Matrix &matrix, float minBound, float maxBound, float minValueToSet,
+void CpuMatrixCalculation::clip_inline(Matrix& matrix, float minBound, float maxBound, float minValueToSet,
                                        float maxValueToSet) {
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
-            if(matrix.get(i, j) < minBound){
+            if (matrix.get(i, j) < minBound) {
                 matrix.get(i, j) = minValueToSet;
             }
-            if(matrix.get(i, j) >= maxBound){
+            if (matrix.get(i, j) >= maxBound) {
                 matrix.get(i, j) = maxValueToSet;
             }
         }
     }
 }
 
-Matrix::Ptr CpuMatrixCalculation::sum(Matrix &lhs, Matrix &rhs) {
+Matrix::Ptr CpuMatrixCalculation::sum(Matrix& lhs, Matrix& rhs) {
     Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
 
     for (int i = 0; i < lhs.getHeight(); ++i) {
@@ -187,7 +187,7 @@ Matrix::Ptr CpuMatrixCalculation::sum(Matrix &lhs, Matrix &rhs) {
     return result;
 }
 
-Matrix::Ptr CpuMatrixCalculation::subtract(Matrix &lhs, Matrix &rhs) {
+Matrix::Ptr CpuMatrixCalculation::subtract(Matrix& lhs, Matrix& rhs) {
     Matrix::Ptr result(new Matrix(lhs.getHeight(), lhs.getWidth()));
 
     for (int i = 0; i < lhs.getHeight(); ++i) {
@@ -202,7 +202,7 @@ Matrix::Ptr CpuMatrixCalculation::subtract(Matrix &lhs, Matrix &rhs) {
     return result;
 }
 
-Matrix::Ptr CpuMatrixCalculation::reciprocal(Matrix &matrix) {
+Matrix::Ptr CpuMatrixCalculation::reciprocal(Matrix& matrix) {
     Matrix::Ptr result(new Matrix(matrix.getHeight(), matrix.getWidth()));
 
     for (int i = 0; i < matrix.getHeight(); ++i) {
@@ -214,10 +214,43 @@ Matrix::Ptr CpuMatrixCalculation::reciprocal(Matrix &matrix) {
     return result;
 }
 
-void CpuMatrixCalculation::reciprocal_inline(Matrix &matrix) {
+void CpuMatrixCalculation::reciprocal_inline(Matrix& matrix) {
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
             matrix.get(i, j) = 1 / matrix.get(i, j);
         }
     }
+}
+
+std::shared_ptr<Matrix> CpuMatrixCalculation::argmax(Matrix& matrix, int axis) {
+    if(axis == 0){
+        Matrix::Ptr result(new Matrix(matrix.getHeight(), 1));
+        for (int i = 0; i < matrix.getHeight(); ++i) {
+            int maxInd = 0;
+            float maxValue = -1;
+            for (int j = 0; j < matrix.getWidth(); ++j) {
+                if(matrix.get(i, j) > maxValue){
+                    maxValue = matrix.get(i, j);
+                    maxInd = j;
+                }
+            }
+            result->get(i, 0) = maxInd;
+        }
+        return result;
+    } else if (axis == 1){
+        Matrix::Ptr result(new Matrix(1, matrix.getWidth()));
+        for (int i = 0; i < matrix.getWidth(); ++i) {
+            int maxInd = 0;
+            float maxValue = -1;
+            for (int j = 0; j < matrix.getHeight(); ++j) {
+                if(matrix.get(j, i) > maxValue){
+                    maxValue = matrix.get(j, i);
+                    maxInd = j;
+                }
+            }
+            result->get(0, i) = maxInd;
+        }
+        return result;
+    }
+    return {};
 }

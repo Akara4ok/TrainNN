@@ -7,11 +7,12 @@
 
 #include "ICostFunction.h"
 
-class BinaryCrossEntropy : public ICostFunction{
+class BinaryCrossEntropy : public ICostFunction {
 public:
     typedef std::unique_ptr<BinaryCrossEntropy> Ptr;
 
     float calculate(Matrix& YHat, Matrix& Y) override;
+
     Matrix::Ptr derivative(Matrix& YHat, Matrix& Y) override;
 };
 
