@@ -3,6 +3,7 @@
 //
 
 #include <cmath>
+#include <random>
 #include "Matrix/Matrix.h"
 #include "Matrix/Calculation/CpuMatrixCalculation.h"
 
@@ -254,4 +255,24 @@ Matrix CpuMatrixCalculation::argmax(const Matrix& matrix, int axis) {
         return result;
     }
     return {};
+}
+
+void CpuMatrixCalculation::randomInit(Matrix& matrix, int w) {
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
+    std::normal_distribution<double> dist{0, 1};
+
+    for (int i = 0; i < matrix.getHeight(); ++i) {
+        for (int j = 0; j < matrix.getWidth(); ++j) {
+            matrix[i][j] = dist(gen) * sqrt(2.0 / w);
+        }
+    }
+}
+
+void CpuMatrixCalculation::zeroInit(Matrix& matrix) {
+    for (int i = 0; i < matrix.getHeight(); ++i) {
+        for (int j = 0; j < matrix.getWidth(); ++j) {
+            matrix[i][j] = 0;
+        }
+    }
 }

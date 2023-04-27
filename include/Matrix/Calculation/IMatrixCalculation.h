@@ -49,6 +49,10 @@ public:
 
     virtual Matrix argmax(const Matrix& matrix, int axis) = 0;
 
+    virtual void randomInit(Matrix& matrix, int w) = 0;
+
+    virtual void zeroInit(Matrix& matrix) = 0;
+
     virtual ~IMatrixCalculation() = default;
 };
 
