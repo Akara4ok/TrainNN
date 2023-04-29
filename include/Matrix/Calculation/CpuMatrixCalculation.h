@@ -51,9 +51,9 @@ public:
 
     Matrix argmax(const Matrix& matrix, int axis) override;
 
-    void randomInit(Matrix& matrix, int w);
+    void randomInit(Matrix& matrix, int w) override;
 
-    void zeroInit(Matrix& matrix);
+    void zeroInit(Matrix& matrix) override;
 };
 
 

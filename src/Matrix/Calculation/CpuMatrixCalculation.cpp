@@ -149,6 +149,7 @@ CpuMatrixCalculation::clip(const Matrix& matrix, float minBound, float maxBound,
 
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
+            result[i][j] = matrix[i][j];
             if (result[i][j] < minBound) {
                 result[i][j] = minValueToSet;
             }

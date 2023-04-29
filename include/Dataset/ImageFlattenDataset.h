@@ -13,6 +13,7 @@ class ImageFlattenDataset : public Dataset {
     std::vector<std::string> imagePaths;
 public:
     typedef std::unique_ptr<ImageFlattenDataset> Ptr;
+
     ImageFlattenDataset(const std::string& folderPath, int imageHeight, int imageWidth,
                         int batchSize = -1, int seed = 42);
 

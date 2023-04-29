@@ -17,7 +17,7 @@ add_executable(TrainNN
         src/Model/Model.cpp
         src/Dataset/Dataset.cpp src/Dataset/ImageFlattenDataset.cpp
         src/Model/Metrics/Accuracy.cpp
-        src/Cuda/CudaKernelFunctions.cu src/Cuda/CudaHelper.cu)
+        src/Cuda/CudaCommonFunctions.cu src/Cuda/CudaHelper.cu src/Cuda/CudaStandardFunctions.cu src/Cuda/CudaSharedFunctions.cu)
 
 
 target_link_libraries(TrainNN ${OpenCV_LIBS} -lcurand)

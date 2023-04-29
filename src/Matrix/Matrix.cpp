@@ -24,7 +24,7 @@ Matrix::Matrix(int height, int width, Provider initProvider)
         : height(height), width(width) {
     isUseCpu = initProvider == Provider::CPU;
     isUseGpu = initProvider == Provider::GPU;
-    if(!isUseGpu){
+    if (!isUseGpu) {
         data = new float[height * width];
     }
 }
@@ -33,7 +33,7 @@ Matrix::Matrix(float* data, int height, int width, Provider initProvider)
         : height(height), width(width) {
     isUseCpu = initProvider == Provider::CPU;
     isUseGpu = initProvider == Provider::GPU;
-    if(!isUseGpu){
+    if (!isUseGpu) {
         data = new float[height * width];
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
@@ -50,7 +50,7 @@ Matrix::Matrix(const Matrix& other) {
     width = other.getWidth();
     isUseGpu = other.isUseCpu;
     isUseGpu = other.isUseGpu;
-    if(isUseCpu){
+    if (isUseCpu) {
         data = new float[height * width];
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
@@ -58,14 +58,14 @@ Matrix::Matrix(const Matrix& other) {
             }
         }
     }
-    if(isUseGpu){
+    if (isUseGpu) {
         gpuData = other.gpuData;
     }
 }
 
 Matrix::Matrix(Matrix&& other) noexcept: height(other.height), width(other.width),
-                                        data(other.data), gpuData(other.gpuData),
-                                        isUseCpu(other.isUseCpu), isUseGpu(other.isUseGpu){
+                                         data(other.data), gpuData(other.gpuData),
+                                         isUseCpu(other.isUseCpu), isUseGpu(other.isUseGpu) {
     other.data = nullptr;
     other.gpuData = nullptr;
 }
@@ -83,10 +83,10 @@ Matrix& Matrix::operator=(Matrix&& other) noexcept {
 }
 
 Matrix::~Matrix() {
-    if(isUseCpu){
+    if (isUseCpu) {
         delete[] data;
     }
-    if (isUseGpu){
+    if (isUseGpu) {
         CudaHelper::deleteGpuMemory(gpuData);
     }
 }
@@ -107,6 +107,14 @@ int Matrix::getHeight() const {
     return height;
 }
 
+float* Matrix::getData() const {
+    return data;
+}
+
+float* Matrix::getGpuData() const {
+    return gpuData;
+}
+
 float* Matrix::getGpuData() {
     return gpuData;
 }
@@ -118,8 +126,14 @@ void Matrix::setNewDataWithSize(float* new_data, int new_height, int new_width) 
     width = new_width;
 }
 
+void Matrix::setNewGpuDataWithSize(float* new_data, int new_height, int new_width) {
+    setGpuData(new_data);
+    height = new_height;
+    width = new_width;
+}
+
 void Matrix::setGpuData(float* new_data) {
-    if(gpuData != nullptr){
+    if (gpuData != nullptr) {
         CudaHelper::deleteGpuMemory(gpuData);
     }
     gpuData = new_data;
@@ -127,20 +141,41 @@ void Matrix::setGpuData(float* new_data) {
 
 void Matrix::copyGpuToCpu() {
     isUseCpu = true;
+    isUseCpu = true;
+    delete[] data;
     data = new float[height * width];
     CudaHelper::copyFromGpuToCpu(gpuData, data, height * width);
 }
 
 void Matrix::copyCpuToGpu() {
-
+    isUseGpu = true;
+    if (gpuData != nullptr) {
+        CudaHelper::deleteGpuMemory(gpuData);
+    }
+    CudaHelper::allocateGpuMemory(&gpuData, height * width);
+    CudaHelper::copyFromCpuToGpu(data, gpuData, height * width);
 }
 
 void Matrix::moveCpuToGpu() {
-
+    isUseGpu = true;
+    isUseCpu = false;
+    if (gpuData != nullptr) {
+        CudaHelper::deleteGpuMemory(gpuData);
+    }
+    CudaHelper::allocateGpuMemory(&gpuData, height * width);
+    CudaHelper::copyFromCpuToGpu(data, gpuData, height * width);
+    delete[] data;
+    data = nullptr;
 }
 
 void Matrix::moveGpuToCpu() {
-
+    isUseCpu = true;
+    isUseCpu = true;
+    delete[] data;
+    data = new float[height * width];
+    CudaHelper::copyFromGpuToCpu(gpuData, data, height * width);
+    CudaHelper::deleteGpuMemory(gpuData);
+    gpuData = nullptr;
 }
 
 void Matrix::randomInit(int w) {
@@ -172,6 +207,9 @@ std::ostream& operator<<(std::ostream& os, const Matrix& matrix) {
 
 float Matrix::sum() const {
     Matrix result = calculation[Config::getInstance().getProvider()]->sum(*this, -1);
+    if (Config::getInstance().getProvider() == Provider::GPU) {
+        result.copyGpuToCpu();
+    }
     return result.get(0, 0);
 }
 
@@ -226,12 +264,18 @@ Matrix Matrix::operator+(const Matrix& rhs) const {
 Matrix Matrix::operator+(float value) const {
     Matrix matrix(1, 1);
     matrix.get(0, 0) = value;
+    if (Config::getInstance().getProvider() == Provider::GPU) {
+        matrix.moveCpuToGpu();
+    }
     return calculation[Config::getInstance().getProvider()]->sum(*this, matrix);
 }
 
 Matrix Matrix::operator-() const {
     Matrix matrix(1, 1);
     matrix.get(0, 0) = -1;
+    if (Config::getInstance().getProvider() == Provider::GPU) {
+        matrix.moveCpuToGpu();
+    }
     return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
 }
 
@@ -242,6 +286,9 @@ Matrix Matrix::operator-(const Matrix& rhs) const {
 Matrix Matrix::operator-(float value) const {
     Matrix matrix(1, 1);
     matrix.get(0, 0) = value;
+    if (Config::getInstance().getProvider() == Provider::GPU) {
+        matrix.moveCpuToGpu();
+    }
     return calculation[Config::getInstance().getProvider()]->subtract(*this, matrix);
 }
 
@@ -252,6 +299,9 @@ Matrix Matrix::operator*(const Matrix& rhs) const {
 Matrix Matrix::operator*(float value) const {
     Matrix matrix(1, 1);
     matrix.get(0, 0) = value;
+    if (Config::getInstance().getProvider() == Provider::GPU) {
+        matrix.moveCpuToGpu();
+    }
     return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
 }
 
@@ -262,6 +312,9 @@ Matrix Matrix::operator/(const Matrix& rhs) const {
 Matrix Matrix::operator/(float value) const {
     Matrix matrix(1, 1);
     matrix.get(0, 0) = value;
+    if (Config::getInstance().getProvider() == Provider::GPU) {
+        matrix.moveCpuToGpu();
+    }
     return calculation[Config::getInstance().getProvider()]->elementWiseDivide(*this, matrix);
 }
 

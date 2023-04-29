@@ -4,11 +4,17 @@
 
 #include "Cuda/CudaHelper.cuh"
 
+void CudaHelper::calculateLinearThreadNum(int& threads_x, int& blocks_x, int size) {
+    threads_x = (size >= THREADS_PER_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : size;
+    blocks_x = (int) ceil(1.0 * size / threads_x);
+}
+
 void
-CudaHelper::calculateThreadNum(int& threads_x, int& threads_y, int& blocks_x, int& blocks_y, int height, int width) {
-    threads_x = (width >= 32) ? THREAD_PER_TWO_DIM_BLOCK : width;
+CudaHelper::calculateBlockThreadNum(int& threads_x, int& threads_y, int& blocks_x, int& blocks_y, int height,
+                                    int width) {
+    threads_x = (width >= THREAD_PER_TWO_DIM_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : width;
     blocks_x = (int) ceil(1.0 * width / threads_x);
-    threads_y = (height >= 32) ? THREAD_PER_TWO_DIM_BLOCK : (int) ceil(height);
+    threads_y = (height >= THREAD_PER_TWO_DIM_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : height;
     blocks_y = (int) ceil(1.0 * height / threads_y);
 }
 

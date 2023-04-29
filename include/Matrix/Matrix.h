@@ -47,9 +47,15 @@ public:
 
     [[nodiscard]] int getHeight() const;
 
+    [[nodiscard]] float* getData() const;
+
+    [[nodiscard]] float* getGpuData() const;
+
     float* getGpuData();
 
     void setNewDataWithSize(float* new_data, int new_height, int new_width);
+
+    void setNewGpuDataWithSize(float* new_data, int new_height, int new_width);
 
     void setGpuData(float* new_data);
 
