@@ -43,7 +43,7 @@ int main() {
     model->compile(0.01, Cost::CrossEntropy);
 //    model->serialize("../Models/model.txt");
 //    model->deserialize("../Models/model.txt");
-    model->train(500, train_x, train_y, val_x, val_y);
+    model->train(30000, train_x, train_y, val_x, val_y);
 //    auto pred = model->predict(x);
 //    for (const auto& matrix : pred) {
 //        std::cout << *matrix;

@@ -24,7 +24,7 @@ Matrix::Matrix(int height, int width, Provider initProvider)
         : height(height), width(width) {
     isUseCpu = initProvider == Provider::CPU;
     isUseGpu = initProvider == Provider::GPU;
-    if (!isUseGpu) {
+    if (isUseCpu) {
         data = new float[height * width];
     }
 }
@@ -73,6 +73,12 @@ Matrix::Matrix(Matrix&& other) noexcept: height(other.height), width(other.width
 Matrix& Matrix::operator=(Matrix&& other) noexcept {
     height = other.height;
     width = other.width;
+    if(isUseCpu){
+        delete[] data;
+    }
+    if(isUseGpu){
+        CudaHelper::deleteGpuMemory(gpuData);
+    }
     data = other.data;
     gpuData = other.gpuData;
     isUseCpu = other.isUseCpu;
@@ -84,6 +90,7 @@ Matrix& Matrix::operator=(Matrix&& other) noexcept {
 
 Matrix::~Matrix() {
     if (isUseCpu) {
+//        std::cout << "delete\n";
         delete[] data;
     }
     if (isUseGpu) {
