@@ -39,36 +39,62 @@ Matrix Linear::forward(const Matrix& input) {
 
 Matrix Linear::forwardWithCache(const Matrix& input) {
     cache.push_back(Matrix::transpose(input));
-    Matrix x = Matrix::multiply(W, input);
+    W.copyGpuToCpu();
+    b.copyGpuToCpu();
+    Matrix x = input;
+    x.copyGpuToCpu();
+    x = Matrix::multiply(W, input);
+    x.copyGpuToCpu();
+    for (int i = 0; i < 20; ++i) {
+        float k = x[i][0];
+        k += 1;
+    }
     x = x + b;
+    x.copyGpuToCpu();
+    for (int i = 0; i < 20; ++i) {
+        float k = x[i][0];
+        k += 1;
+    }
     cache.push_back(x);
+//    if(hidden == 10){
+//        std::cout << x;
+//    }
     x = activation->calculate(x);
+    x.copyGpuToCpu();
     cache.push_back(x);
     return x;
 }
 
 Matrix Linear::backward(const Matrix& input, int m, float lr) {
     Matrix dx = activation->derivative(cache[1], input);
+    dx.copyGpuToCpu();
+//    if(hidden == 10){
+//        std::cout << dx;
+//    }
     Matrix dW = Matrix::multiply(dx, cache[0]) / m;
+    dW.copyGpuToCpu();
     Matrix db = Matrix::sum(dx, 0) / m;
     Matrix output = Matrix::multiply(Matrix::transpose(W), dx);
     updateParams(dW, db, lr);
+    W.copyGpuToCpu();
     return output;
 }
 
 void Linear::updateParams(const Matrix& dW, const Matrix& db, float lr) {
+//    W.copyGpuToCpu();
     W = W - (dW * lr);
+//    W.copyGpuToCpu();
     b = b - (db * lr);
 }
 
 void Linear::createNewWeights(int previousHidden) {
-    W = Matrix(hidden, previousHidden);
-    b = Matrix(hidden, 1);
+    W = Matrix(hidden, previousHidden, Config::getInstance().getProvider());
+    b = Matrix(hidden, 1, Config::getInstance().getProvider());
 }
 
 void Linear::initWeights(int previousHidden) {
-    W = Matrix(hidden, previousHidden);
-    b = Matrix(hidden, 1);
+    W = Matrix(hidden, previousHidden, Config::getInstance().getProvider());
+    b = Matrix(hidden, 1, Config::getInstance().getProvider());
     W.randomInit(previousHidden);
     b.zeroInit();
 }

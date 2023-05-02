@@ -29,7 +29,7 @@ Matrix::Matrix(int height, int width, Provider initProvider)
     }
 }
 
-Matrix::Matrix(float* data, int height, int width, Provider initProvider)
+Matrix::Matrix(float* new_data, int height, int width, Provider initProvider)
         : height(height), width(width) {
     isUseCpu = initProvider == Provider::CPU;
     isUseGpu = initProvider == Provider::GPU;
@@ -37,18 +37,18 @@ Matrix::Matrix(float* data, int height, int width, Provider initProvider)
         data = new float[height * width];
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
-                get(i, j) = (data + i * width)[j];
+                get(i, j) = (new_data + i * width)[j];
             }
         }
     } else {
-        gpuData = data;
+        gpuData = new_data;
     }
 }
 
 Matrix::Matrix(const Matrix& other) {
     height = other.getHeight();
     width = other.getWidth();
-    isUseGpu = other.isUseCpu;
+    isUseCpu = other.isUseCpu;
     isUseGpu = other.isUseGpu;
     if (isUseCpu) {
         data = new float[height * width];
@@ -183,7 +183,12 @@ void Matrix::randomInit(int w) {
 }
 
 void Matrix::zeroInit() {
-    calculation[Config::getInstance().getProvider()]->zeroInit(*this);
+    if(isUseCpu){
+        calculation[Provider::CPU]->zeroInit(*this);
+    }
+    if(isUseGpu){
+        calculation[Provider::GPU]->zeroInit(*this);
+    }
 }
 
 std::ostream& operator<<(std::ostream& os, const Matrix& matrix) {

@@ -17,6 +17,23 @@ namespace GPU {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
         const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
         if ((row < height) && (col < width)) {
+//            if(axis == -1){
+//                for (int i = 0; i < height; i++){
+//                    for (int j = 0; j < width; j++){
+//                        result[0] += data[i * width + j];
+//                    }
+//                }
+//            }
+//            if(axis == 0){
+//                for (int j = 0; j < width; j++){
+//                    result[row] += data[row * width + j];
+//                }
+//            }
+//            if(axis == 1){
+//                for (int i = 0; i < width; i++){
+//                    result[col] += data[i * width + col];
+//                }
+//            }
             if (axis == -1) {
                 atomicAdd(result, data[row * width + col]);
             }
@@ -112,6 +129,7 @@ namespace GPU {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
         const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
         if ((row < heightLhs) && (col < widthRhs)) {
+            result[row * widthRhs + col] = 0;
             for (int i = 0; i < widthLhs; i++) {
                 result[row * widthRhs + col] += lhsData[row * widthLhs + i] * rhsData[i * widthRhs + col];
             }

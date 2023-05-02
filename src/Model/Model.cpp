@@ -42,12 +42,24 @@ void Model::train(int epochs,
         }
         for (int t = 0; t < train_x.size(); ++t) {
             Matrix current = *train_x[t];
+            current.copyCpuToGpu();
             Matrix current_y = *train_y[t];
+            current_y.copyCpuToGpu();
+
             for (const auto& layer: layers) {
                 current = layer->forwardWithCache(current);
             }
+            current.copyGpuToCpu();
+            current_y.copyGpuToCpu();
+//            std::cout << "predicted\n";
+//            std::cout << current;
+//            std::cout << "true\n";
+//            std::cout << current_y;
             float cost = costFunction->calculate(current, current_y);
             Matrix dCurrent = costFunction->derivative(current, current_y);
+//            std::cout << "d_predicted\n";
+//            dCurrent.copyGpuToCpu();
+//            std::cout << dCurrent;
             for (int i = layers.size() - 1; i >= 0; i--) {
                 dCurrent = layers[i]->backward(dCurrent, current_y.getWidth(), learningRate);
                 layers[i]->clearCache();
@@ -58,17 +70,18 @@ void Model::train(int epochs,
                 std::cout << "loss: " << cost << " ";
             }
         }
-        float val_loss = 0;
-        float val_accuracy = 0;
-        int datasetSize = 0;
-        for (int t = 0; t < val_x.size(); ++t) {
-            Matrix val_predict = predict(*val_x[t]);
-            datasetSize += val_x[t]->getWidth();
-            val_loss += costFunction->calculate(val_predict, *val_y[t]) * val_x[t]->getWidth();
-            val_accuracy += Accuracy::calculate(val_predict, *val_y[t]) * val_x[t]->getWidth();
-        }
-        std::cout << "-- val_loss: " << val_loss / datasetSize << " - ";
-        std::cout << "val_accuracy: " << val_accuracy / datasetSize << " ";
+
+//        float val_loss = 0;
+//        float val_accuracy = 0;
+//        int datasetSize = 0;
+//        for (int t = 0; t < val_x.size(); ++t) {
+//            Matrix val_predict = predict(*val_x[t]);
+//            datasetSize += val_x[t]->getWidth();
+//            val_loss += costFunction->calculate(val_predict, *val_y[t]) * val_x[t]->getWidth();
+//            val_accuracy += Accuracy::calculate(val_predict, *val_y[t]) * val_x[t]->getWidth();
+//        }
+//        std::cout << "-- val_loss: " << val_loss / datasetSize << " - ";
+//        std::cout << "val_accuracy: " << val_accuracy / datasetSize << " ";
         std::cout << std::endl;
     }
     std::cout << std::endl;
