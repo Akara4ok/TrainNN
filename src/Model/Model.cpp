@@ -122,9 +122,13 @@ void Model::test(std::vector<Matrix::Ptr> test_x, std::vector<Matrix::Ptr> test_
     int datasetSize = 0;
     for (int t = 0; t < test_x.size(); ++t) {
         Matrix val_predict = predict(*test_x[t]);
+        Matrix current_test_y(*test_y[t]);
+        if(Config::getInstance().getProvider() == Provider::GPU){
+            current_test_y.copyCpuToGpu();
+        }
         datasetSize += test_x[t]->getWidth();
-        test_loss += costFunction->calculate(val_predict, *test_y[t]) * test_y[t]->getWidth();
-        test_accuracy += Accuracy::calculate(val_predict, *test_y[t]) * test_y[t]->getWidth();
+        test_loss += costFunction->calculate(val_predict, current_test_y) * test_y[t]->getWidth();
+        test_accuracy += Accuracy::calculate(val_predict, current_test_y) * test_y[t]->getWidth();
     }
     std::cout << "-- test_loss: " << test_loss / datasetSize << " - ";
     std::cout << "test_accuracy: " << test_accuracy / datasetSize << " ";

@@ -17,7 +17,7 @@
 #include "Model/Metrics/Accuracy.h"
 
 int main() {
-    Config::getInstance().setProvider(Provider::GPU);
+    Config::getInstance().setProvider(Provider::CPU);
 //    Provider provider = Config::getInstance().getProvider();
     int image_width = 32;
     int image_height = 32;
@@ -52,24 +52,24 @@ int main() {
     model->add(std::make_unique<Linear>(10, Activation::Softmax));
     model->compile(0.01, Cost::CrossEntropy);
 
-//    model->train(30, Verbose::All, train_x, train_y, val_x, val_y);
+//    model->train(3000, Verbose::All, train_x, train_y, val_x, val_y);
     model->deserialize("../Models/model.txt");
 
-    Matrix pred_test_y = model->predict(*test_x[0]);
-    test_y[0]->copyCpuToGpu();
-    std::cout << *test_y[0];
+    Matrix image = ImageFlattenDataset::preprocessImage("../Data/mnistTest/0/02.jpg",
+                                                        image_height, image_width);
+    Matrix pred_test_y = model->predict(image);
+//    test_y[0]->copyCpuToGpu();
+//    std::cout << *test_y[0];
     std::cout << pred_test_y;
-    std::cout << Accuracy::calculate(pred_test_y, *test_y[0]);
+//    std::cout << Accuracy::calculate(pred_test_y, *test_y[0]);
 
 //    model->serialize("../Models/model.txt");
 
 //    model->serialize("../Models/model.txt");
-//    model->deserialize("../Models/model.txt");
-//    model->train(30000, train_x, train_y, val_x, val_y);
 //    auto pred = model->predict(x);
 //    for (const auto& matrix : pred) {
 //        std::cout << *matrix;
 //    }
 //    model->test(train_x, train_y);
-//    model->test(val_x, val_y);
+    model->test(val_x, val_y);
 }

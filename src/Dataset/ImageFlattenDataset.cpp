@@ -70,6 +70,15 @@ ImageFlattenDataset::createDataset(const std::string& folderPath, int imageHeigh
     return dataset;
 }
 
+Matrix ImageFlattenDataset::preprocessImage(std::string imagePath, int height, int width) {
+    cv::Mat image = imread(imagePath, cv::IMREAD_GRAYSCALE);
+    cv::resize(image, image, cv::Size(height, width));
+    image.convertTo(image, CV_32F, 1.0 / 255, 0);
+    auto* data = image.ptr<float>(0);
+    Matrix matrix(data, height * width, 1);
+    return matrix;
+}
+
 Matrix::Ptr ImageFlattenDataset::preprocessImage(std::string imagePath) {
     cv::Mat image = imread(imagePath, cv::IMREAD_GRAYSCALE);
     cv::resize(image, image, cv::Size(imageHeight, imageWidth));
