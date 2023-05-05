@@ -74,6 +74,10 @@ void Linear::initWeights(int previousHidden) {
 }
 
 void Linear::serialize(std::ofstream& file) {
+    if(Config::getInstance().getProvider() == Provider::GPU){
+        W.copyGpuToCpu();
+        b.copyGpuToCpu();
+    }
     file << hidden << " " << W.getWidth() << " " << activationType << "\n";
     for (int i = 0; i < W.getHeight(); ++i) {
         for (int j = 0; j < W.getWidth(); ++j) {
@@ -105,5 +109,9 @@ void Linear::deserialize(std::ifstream& file) {
             file >> W[i][j];
         }
         file >> b[i][0];
+    }
+    if(Config::getInstance().getProvider() == Provider::GPU){
+        W.moveCpuToGpu();
+        b.moveCpuToGpu();
     }
 }

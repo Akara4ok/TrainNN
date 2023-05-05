@@ -32,13 +32,15 @@ void Model::compile(float learningRate_, Cost costType_) {
     }
 }
 
-void Model::train(int epochs,
-                  const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
-                  const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y) {
+void
+Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
+             const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y) {
     for (int e = 0; e < epochs; ++e) {
-        std::cout << "Epoch " << e << ": ";
-        if (train_x.size() > 1) {
-            std::cout << std::endl;
+        if(verb == Verbose::All){
+            std::cout << "Epoch " << e << ": ";
+            if (train_x.size() > 1) {
+                std::cout << std::endl;
+            }
         }
         for (int t = 0; t < train_x.size(); ++t) {
             Matrix current(*train_x[t]);
@@ -57,10 +59,12 @@ void Model::train(int epochs,
                 dCurrent = layers[i]->backward(dCurrent, current_y.getWidth(), learningRate);
                 layers[i]->clearCache();
             }
-            if (train_x.size() > 1) {
-                std::cout << "   Batch " << t << ": loss: " << cost << std::endl;
-            } else {
-                std::cout << "loss: " << cost << " ";
+            if(verb == Verbose::All) {
+                if (train_x.size() > 1) {
+                    std::cout << "   Batch " << t << ": loss: " << cost << std::endl;
+                } else {
+                    std::cout << "loss: " << cost << " ";
+                }
             }
         }
 
@@ -79,11 +83,15 @@ void Model::train(int epochs,
             val_loss += costFunction->calculate(val_predict, current_val_y) * val_x[t]->getWidth();
             val_accuracy += Accuracy::calculate(val_predict, current_val_y) * val_x[t]->getWidth();
         }
-        std::cout << "-- val_loss: " << val_loss / datasetSize << " - ";
-        std::cout << "val_accuracy: " << val_accuracy / datasetSize << " ";
+        if(verb == Verbose::All){
+            std::cout << "-- val_loss: " << val_loss / datasetSize << " - ";
+            std::cout << "val_accuracy: " << val_accuracy / datasetSize << " ";
+            std::cout << std::endl;
+        }
+    }
+    if(verb == Verbose::All) {
         std::cout << std::endl;
     }
-    std::cout << std::endl;
 }
 
 Matrix Model::predict(const Matrix& input) {
@@ -145,6 +153,8 @@ void Model::deserialize(const std::string& path) {
     file >> inputSize;
     file >> learningRate >> costType;
     compile(learningRate, costType);
+
+    layers.clear();
 
     for (int i = 0; i < numOfLayers; ++i) {
         std::string layerType;

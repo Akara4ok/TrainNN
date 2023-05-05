@@ -10,6 +10,11 @@
 #include "Model/Layer/ILayer.h"
 #include "Model/CostFunction/ICostFunction.h"
 
+enum class Verbose{
+    None,
+    All
+};
+
 class Model {
     int inputSize{};
     float learningRate{};
@@ -27,9 +32,9 @@ public:
 
     void compile(float learningRate_, Cost costType_);
 
-    void train(int epochs,
-               const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
-               const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y);
+    void train(int epochs, Verbose verb,
+              const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
+              const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y);
 
     Matrix predict(const Matrix& input);
 
