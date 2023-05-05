@@ -47,7 +47,7 @@ void Model::train(int epochs,
                 current.copyCpuToGpu();
                 current_y.copyCpuToGpu();
             }
-            
+
             for (const auto& layer: layers) {
                 current = layer->forwardWithCache(current);
             }
@@ -64,26 +64,38 @@ void Model::train(int epochs,
             }
         }
 
-//        float val_loss = 0;
-//        float val_accuracy = 0;
-//        int datasetSize = 0;
-//        for (int t = 0; t < val_x.size(); ++t) {
-//            Matrix val_predict = predict(*val_x[t]);
-//            datasetSize += val_x[t]->getWidth();
-//            val_loss += costFunction->calculate(val_predict, *val_y[t]) * val_x[t]->getWidth();
-//            val_accuracy += Accuracy::calculate(val_predict, *val_y[t]) * val_x[t]->getWidth();
-//        }
-//        std::cout << "-- val_loss: " << val_loss / datasetSize << " - ";
-//        std::cout << "val_accuracy: " << val_accuracy / datasetSize << " ";
+        float val_loss = 0;
+        float val_accuracy = 0;
+        int datasetSize = 0;
+        for (int t = 0; t < val_x.size(); ++t) {
+            Matrix current_val_x(*val_x[t]);
+            Matrix current_val_y(*val_y[t]);
+            if(Config::getInstance().getProvider() == Provider::GPU){
+                current_val_x.copyCpuToGpu();
+                current_val_y.copyCpuToGpu();
+            }
+            Matrix val_predict = predict(current_val_x);
+            datasetSize += val_x[t]->getWidth();
+            val_loss += costFunction->calculate(val_predict, current_val_y) * val_x[t]->getWidth();
+            val_accuracy += Accuracy::calculate(val_predict, current_val_y) * val_x[t]->getWidth();
+        }
+        std::cout << "-- val_loss: " << val_loss / datasetSize << " - ";
+        std::cout << "val_accuracy: " << val_accuracy / datasetSize << " ";
         std::cout << std::endl;
     }
     std::cout << std::endl;
 }
 
 Matrix Model::predict(const Matrix& input) {
-    Matrix current = input;
+    Matrix current(input);
+    if(Config::getInstance().getProvider() == Provider::GPU){
+        current.copyCpuToGpu();
+    }
     for (const auto& layer: layers) {
         current = layer->forward(current);
+    }
+    if(Config::getInstance().getProvider() == Provider::GPU){
+        current.copyGpuToCpu();
     }
     return current;
 }

@@ -22,12 +22,12 @@ ImageFlattenDataset::createDataset(const std::string& folderPath, int imageHeigh
     std::set<std::string> uniqueLabels;
     for (const auto& dirEntry: std::filesystem::recursive_directory_iterator(folderPath)) {
         if (is_directory(dirEntry.path())) {
+            std::string labelName = dirEntry.path().filename();
+            if (uniqueLabels.find(labelName) == uniqueLabels.end()) {
+                uniqueLabels.insert(labelName);
+                dataset->labelsNames.push_back(labelName);
+            }
             continue;
-        }
-        std::string labelName = dirEntry.path().parent_path().filename();
-        if (uniqueLabels.find(labelName) == uniqueLabels.end()) {
-            uniqueLabels.insert(labelName);
-            dataset->labelsNames.push_back(labelName);
         }
         dataset->imagePaths.push_back(dirEntry.path());
     }

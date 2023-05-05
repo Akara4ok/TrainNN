@@ -14,6 +14,8 @@
 #include "Dataset/ImageFlattenDataset.h"
 #include "Model/Activation/SoftmaxActivation.h"
 
+#include "Model/Metrics/Accuracy.h"
+
 int main() {
     Config::getInstance().setProvider(Provider::GPU);
 //    Provider provider = Config::getInstance().getProvider();
@@ -22,17 +24,25 @@ int main() {
     ImageFlattenDataset::Ptr train_dataset =
             ImageFlattenDataset::createDataset("../Data/mnist/train",
                                                image_height, image_width,
-                                               20, 500);
+                                               2000, 500);
 
     auto train_x = train_dataset->getData();
     auto train_y = train_dataset->getLabel();
     ImageFlattenDataset::Ptr val_dataset =
             ImageFlattenDataset::createDataset("../Data/mnist/test",
                                                image_height, image_width,
-                                               20, 500);
+                                               2000, 500);
 
     auto val_x = val_dataset->getData();
     auto val_y = val_dataset->getLabel();
+
+    ImageFlattenDataset::Ptr test_dataset =
+        ImageFlattenDataset::createDataset("../Data/mnistTest",
+                                           image_height, image_width);
+
+    auto test_x = test_dataset->getData();
+    auto test_y = test_dataset->getLabel();
+
     std::cout << "Datasets have been read!" << std::endl;
     Model::Ptr model(new Model(image_height * image_width));
     model->add(std::make_unique<Linear>(70, Activation::Relu));
@@ -41,9 +51,19 @@ int main() {
 //    model->add(std::make_unique<Linear>(5, Activation::Relu));
     model->add(std::make_unique<Linear>(10, Activation::Softmax));
     model->compile(0.01, Cost::CrossEntropy);
+
+    model->train(300, train_x, train_y, val_x, val_y);
+
+
+    Matrix pred_test_y = model->predict(*test_x[0]);
+    test_y[0]->copyCpuToGpu();
+    std::cout << *test_y[0];
+    std::cout << pred_test_y;
+    std::cout << Accuracy::calculate(pred_test_y, *test_y[0]);
+
 //    model->serialize("../Models/model.txt");
 //    model->deserialize("../Models/model.txt");
-    model->train(30000, train_x, train_y, val_x, val_y);
+//    model->train(30000, train_x, train_y, val_x, val_y);
 //    auto pred = model->predict(x);
 //    for (const auto& matrix : pred) {
 //        std::cout << *matrix;
