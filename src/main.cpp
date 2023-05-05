@@ -22,14 +22,14 @@ int main() {
     ImageFlattenDataset::Ptr train_dataset =
             ImageFlattenDataset::createDataset("../Data/mnist/train",
                                                image_height, image_width,
-                                               1024, 500);
+                                               20, 500);
 
     auto train_x = train_dataset->getData();
     auto train_y = train_dataset->getLabel();
     ImageFlattenDataset::Ptr val_dataset =
             ImageFlattenDataset::createDataset("../Data/mnist/test",
                                                image_height, image_width,
-                                               1024, 500);
+                                               20, 500);
 
     auto val_x = val_dataset->getData();
     auto val_y = val_dataset->getLabel();
@@ -50,13 +50,4 @@ int main() {
 //    }
 //    model->test(train_x, train_y);
 //    model->test(val_x, val_y);
-//    Matrix m1(70, 10, Provider::GPU);
-//    m1.zeroInit();
-//    Matrix m2(70, 10, Provider::GPU);
-//    m1.copyGpuToCpu();
-//    std::cout << m1 << "\n";
-//
-//    m1.zeroInit();
-//    m1.copyGpuToCpu();
-//    std::cout << m1 << "\n";
 }

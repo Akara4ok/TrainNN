@@ -36,3 +36,8 @@ void CudaHelper::copyFromGpuToCpu(float* gpuData, float* cpuData, int size) {
     int bytes = size * sizeof(float);
     cudaMemcpy(cpuData, gpuData, bytes, cudaMemcpyDeviceToHost);
 }
+
+void CudaHelper::copyFromGpuToGpu(float* src, float* dest, int size) {
+    int bytes = size * sizeof(float);
+    cudaMemcpy(dest, src, bytes, cudaMemcpyDeviceToDevice);
+}

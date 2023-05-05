@@ -43,11 +43,11 @@ void Model::train(int epochs,
         for (int t = 0; t < train_x.size(); ++t) {
             Matrix current(*train_x[t]);
             Matrix current_y(*train_y[t]);
-            if(Config::getInstance().getProvider() == Provider::GPU){
+            if (Config::getInstance().getProvider() == Provider::GPU) {
                 current.copyCpuToGpu();
                 current_y.copyCpuToGpu();
             }
-
+            
             for (const auto& layer: layers) {
                 current = layer->forwardWithCache(current);
             }

@@ -59,7 +59,8 @@ Matrix::Matrix(const Matrix& other) {
         }
     }
     if (isUseGpu) {
-        gpuData = other.gpuData;
+        CudaHelper::allocateGpuMemory(&gpuData, height * width);
+        CudaHelper::copyFromGpuToGpu(other.gpuData, gpuData, height * width);
     }
 }
 

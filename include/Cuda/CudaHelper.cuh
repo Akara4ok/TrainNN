@@ -22,6 +22,8 @@ public:
     static void copyFromCpuToGpu(float* cpuData, float* gpuData, int size);
 
     static void copyFromGpuToCpu(float* gpuData, float* cpuData, int size);
+
+    static void copyFromGpuToGpu(float* src, float* dest, int size);
 };
 
 
