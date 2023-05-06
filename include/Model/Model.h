@@ -6,14 +6,11 @@
 #define CMAKE_AND_CUDA_MODEL_H
 
 #include <vector>
+#include <string>
 #include "Matrix/Matrix.h"
 #include "Model/Layer/ILayer.h"
 #include "Model/CostFunction/ICostFunction.h"
-
-enum class Verbose{
-    None,
-    All
-};
+#include "Monitoring/Monitoring.h"
 
 class Model {
     int inputSize{};
@@ -32,9 +29,9 @@ public:
 
     void compile(float learningRate_, Cost costType_);
 
-    void train(int epochs, Verbose verb,
-              const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
-              const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y);
+    void
+    train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
+          const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y, std::string logFolder = "");
 
     Matrix predict(const Matrix& input);
 

@@ -5,6 +5,8 @@
 #ifndef CMAKE_AND_CUDA_CONFIG_H
 #define CMAKE_AND_CUDA_CONFIG_H
 
+#include <string>
+
 enum class Provider {
     CPU,
     GPU
@@ -12,6 +14,7 @@ enum class Provider {
 
 class Config {
     Provider provider = Provider::CPU;
+    std::string logDir = "../Logs";
 
     Config() = default;
 
@@ -23,6 +26,14 @@ public:
     static Config& getInstance() {
         static Config c_Instance;
         return c_Instance;
+    }
+
+    std::string getLogDir() {
+        return logDir;
+    };
+
+    void setLogDir(const std::string& dir) {
+        logDir = dir;
     }
 
     Provider getProvider() {

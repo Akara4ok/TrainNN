@@ -34,14 +34,9 @@ void Model::compile(float learningRate_, Cost costType_) {
 
 void
 Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
-             const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y) {
+             const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y, std::string logFolder) {
+    Monitoring monitoring(train_x[0]->getWidth(), train_x.size(), verb);
     for (int e = 0; e < epochs; ++e) {
-        if(verb == Verbose::All){
-            std::cout << "Epoch " << e << ": ";
-            if (train_x.size() > 1) {
-                std::cout << std::endl;
-            }
-        }
         for (int t = 0; t < train_x.size(); ++t) {
             Matrix current(*train_x[t]);
             Matrix current_y(*train_y[t]);
@@ -59,13 +54,8 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
                 dCurrent = layers[i]->backward(dCurrent, current_y.getWidth(), learningRate);
                 layers[i]->clearCache();
             }
-            if(verb == Verbose::All) {
-                if (train_x.size() > 1) {
-                    std::cout << "   Batch " << t << ": loss: " << cost << std::endl;
-                } else {
-                    std::cout << "loss: " << cost << " ";
-                }
-            }
+            monitoring.add(e, t, cost);
+            monitoring.logLastSample();
         }
 
         float val_loss = 0;
@@ -83,14 +73,13 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
             val_loss += costFunction->calculate(val_predict, current_val_y) * val_x[t]->getWidth();
             val_accuracy += Accuracy::calculate(val_predict, current_val_y) * val_x[t]->getWidth();
         }
-        if(verb == Verbose::All){
-            std::cout << "-- val_loss: " << val_loss / datasetSize << " - ";
-            std::cout << "val_accuracy: " << val_accuracy / datasetSize << " ";
-            std::cout << std::endl;
-        }
+        val_loss /= datasetSize;
+        val_accuracy /= datasetSize;
+        monitoring.add(e, -1, std::numeric_limits<float>::lowest(), val_loss, val_accuracy);
+        monitoring.logLastSample();
     }
-    if(verb == Verbose::All) {
-        std::cout << std::endl;
+    if(!logFolder.empty()){
+        monitoring.serialize(logFolder);
     }
 }
 
@@ -130,7 +119,8 @@ void Model::test(std::vector<Matrix::Ptr> test_x, std::vector<Matrix::Ptr> test_
         test_loss += costFunction->calculate(val_predict, current_test_y) * test_y[t]->getWidth();
         test_accuracy += Accuracy::calculate(val_predict, current_test_y) * test_y[t]->getWidth();
     }
-    std::cout << "-- test_loss: " << test_loss / datasetSize << " - ";
+    std::cout << "Test: ";
+    std::cout << "test_loss: " << test_loss / datasetSize << " - ";
     std::cout << "test_accuracy: " << test_accuracy / datasetSize << " ";
     std::cout << std::endl;
 }

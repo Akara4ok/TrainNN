@@ -37,7 +37,7 @@ ImageFlattenDataset::createDataset(const std::string& folderPath, int imageHeigh
     g.seed(seed);
     std::shuffle(dataset->imagePaths.begin(), dataset->imagePaths.end(), g);
     if (fixedSize > 0) {
-        dataset->imagePaths.erase(dataset->imagePaths.begin() + fixedSize + 1, dataset->imagePaths.end());
+        dataset->imagePaths.erase(dataset->imagePaths.begin() + fixedSize, dataset->imagePaths.end());
     }
 
     std::vector<Matrix::Ptr> singleBatchData;
