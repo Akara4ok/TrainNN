@@ -3,6 +3,7 @@
 //
 
 #include <cmath>
+#include <random>
 #include "Matrix/Matrix.h"
 #include "Matrix/Calculation/CpuMatrixCalculation.h"
 
@@ -148,6 +149,7 @@ CpuMatrixCalculation::clip(const Matrix& matrix, float minBound, float maxBound,
 
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
+            result[i][j] = matrix[i][j];
             if (result[i][j] < minBound) {
                 result[i][j] = minValueToSet;
             }
@@ -235,7 +237,7 @@ Matrix CpuMatrixCalculation::argmax(const Matrix& matrix, int axis) {
                     maxInd = j;
                 }
             }
-            result[i][0] = maxInd;
+            result[i][0] = static_cast<float>(maxInd);
         }
         return result;
     } else if (axis == 1) {
@@ -249,9 +251,29 @@ Matrix CpuMatrixCalculation::argmax(const Matrix& matrix, int axis) {
                     maxInd = j;
                 }
             }
-            result[0][i] = maxInd;
+            result[0][i] = static_cast<float>(maxInd);
         }
         return result;
     }
     return {};
+}
+
+void CpuMatrixCalculation::randomInit(Matrix& matrix, int w) {
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
+    std::normal_distribution<double> dist{0, 1};
+
+    for (int i = 0; i < matrix.getHeight(); ++i) {
+        for (int j = 0; j < matrix.getWidth(); ++j) {
+            matrix[i][j] = static_cast<float>(dist(gen) * sqrt(2.0 / w));
+        }
+    }
+}
+
+void CpuMatrixCalculation::zeroInit(Matrix& matrix) {
+    for (int i = 0; i < matrix.getHeight(); ++i) {
+        for (int j = 0; j < matrix.getWidth(); ++j) {
+            matrix[i][j] = 0;
+        }
+    }
 }

@@ -26,7 +26,7 @@ protected:
 public:
     typedef std::unique_ptr<Dataset> Ptr;
 
-    Dataset(std::string  folderPath, int batchSize, int seed);
+    Dataset(std::string folderPath, int batchSize, int seed);
 
     std::vector<Matrix::Ptr> getData();
 

@@ -133,9 +133,10 @@ _deps
 *.ii
 *.gpu
 *.ptx
+*.cubin
+*.fatbin
 
 # Neural networks
 Data/
 Models/
-*.cubin
-*.fatbin
+Logs/

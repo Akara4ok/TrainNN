@@ -49,8 +49,8 @@ Matrix Linear::forwardWithCache(const Matrix& input) {
 
 Matrix Linear::backward(const Matrix& input, int m, float lr) {
     Matrix dx = activation->derivative(cache[1], input);
-    Matrix dW = Matrix::multiply(dx, cache[0]) / m;
-    Matrix db = Matrix::sum(dx, 0) / m;
+    Matrix dW = Matrix::multiply(dx, cache[0]) / static_cast<float>(m);
+    Matrix db = Matrix::sum(dx, 0) / static_cast<float>(m);
     Matrix output = Matrix::multiply(Matrix::transpose(W), dx);
     updateParams(dW, db, lr);
     return output;
@@ -62,18 +62,22 @@ void Linear::updateParams(const Matrix& dW, const Matrix& db, float lr) {
 }
 
 void Linear::createNewWeights(int previousHidden) {
-    W = Matrix(hidden, previousHidden);
-    b = Matrix(hidden, 1);
+    W = Matrix(hidden, previousHidden, Config::getInstance().getProvider());
+    b = Matrix(hidden, 1, Config::getInstance().getProvider());
 }
 
 void Linear::initWeights(int previousHidden) {
-    W = Matrix(hidden, previousHidden);
-    b = Matrix(hidden, 1);
+    W = Matrix(hidden, previousHidden, Config::getInstance().getProvider());
+    b = Matrix(hidden, 1, Config::getInstance().getProvider());
     W.randomInit(previousHidden);
     b.zeroInit();
 }
 
 void Linear::serialize(std::ofstream& file) {
+    if (Config::getInstance().getProvider() == Provider::GPU) {
+        W.copyGpuToCpu();
+        b.copyGpuToCpu();
+    }
     file << hidden << " " << W.getWidth() << " " << activationType << "\n";
     for (int i = 0; i < W.getHeight(); ++i) {
         for (int j = 0; j < W.getWidth(); ++j) {
@@ -105,5 +109,9 @@ void Linear::deserialize(std::ifstream& file) {
             file >> W[i][j];
         }
         file >> b[i][0];
+    }
+    if (Config::getInstance().getProvider() == Provider::GPU) {
+        W.moveCpuToGpu();
+        b.moveCpuToGpu();
     }
 }

@@ -13,8 +13,11 @@ class ImageFlattenDataset : public Dataset {
     std::vector<std::string> imagePaths;
 public:
     typedef std::unique_ptr<ImageFlattenDataset> Ptr;
+
     ImageFlattenDataset(const std::string& folderPath, int imageHeight, int imageWidth,
                         int batchSize = -1, int seed = 42);
+
+    static Matrix preprocessImage(const std::string& imagePath, int height, int width);
 
     Matrix::Ptr preprocessImage(std::string imagePath) override;
 

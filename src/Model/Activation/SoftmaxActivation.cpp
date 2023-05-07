@@ -7,6 +7,7 @@
 Matrix SoftmaxActivation::calculate(const Matrix& matrix) {
     Matrix exp_matrix = Matrix::exp(matrix);
     Matrix sum_matrix = Matrix::sum(exp_matrix, 1);
+    Matrix divide_matrix = exp_matrix / sum_matrix;
     return exp_matrix / sum_matrix;
 }
 

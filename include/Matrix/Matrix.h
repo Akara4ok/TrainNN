@@ -13,26 +13,29 @@
 class IMatrixCalculation;
 
 class Matrix {
-    float* data;
-    int height;
-    int width;
+    float* data = nullptr;
+    float* gpuData = nullptr;
+    int height = 0;
+    int width = 0;
     static std::map<Provider, std::unique_ptr<IMatrixCalculation>> calculation;
+    bool isUseCpu = false;
+    bool isUseGpu = false;
 public:
     typedef std::shared_ptr<Matrix> Ptr;
 
     static void initCalculation();
 
-    Matrix();
+    Matrix() = default;
 
-    Matrix(int height, int width);
+    Matrix(int height, int width, Provider initProvider = Provider::CPU);
 
-    Matrix(const float* data, int height, int width);
+    Matrix(float* data, int height, int width, Provider initProvider = Provider::CPU);
 
     Matrix(const Matrix& other);
 
     Matrix(Matrix&& other) noexcept;
 
-    Matrix& operator=(Matrix&& other);
+    Matrix& operator=(Matrix&& other) noexcept;
 
     ~Matrix();
 
@@ -44,7 +47,25 @@ public:
 
     [[nodiscard]] int getHeight() const;
 
+    [[nodiscard]] float* getData() const;
+
+    [[nodiscard]] float* getGpuData() const;
+
+    float* getGpuData();
+
     void setNewDataWithSize(float* new_data, int new_height, int new_width);
+
+    void setNewGpuDataWithSize(float* new_data, int new_height, int new_width);
+
+    void setGpuData(float* new_data);
+
+    void copyGpuToCpu();
+
+    void copyCpuToGpu();
+
+    void moveCpuToGpu();
+
+    void moveGpuToCpu();
 
     void randomInit(int w);
 

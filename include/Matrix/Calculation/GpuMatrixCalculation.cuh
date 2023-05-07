@@ -50,6 +50,10 @@ public:
     void reciprocal_inline(Matrix& matrix) override;
 
     Matrix argmax(const Matrix& matrix, int axis) override;
+
+    void randomInit(Matrix& matrix, int w) override;
+
+    void zeroInit(Matrix& matrix) override;
 };
 
 
