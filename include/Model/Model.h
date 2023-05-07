@@ -24,18 +24,22 @@ public:
 
     Model() = default;
 
+    explicit Model(int inputSize);
+
     explicit Model(std::initializer_list<ILayer*> layers, int inputSize);
 
     void add(ILayer* layer);
+
     void add(ILayer::Ptr&& layer);
 
-    int getNumberOfParams();
+    [[nodiscard]] int getNumberOfParams() const;
 
     void compile(float learningRate_, Cost costType_);
 
     void
     train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
-          const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y, std::string logFolder = "");
+          const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y,
+          const std::string& logFolder = "");
 
     Matrix predict(const Matrix& input);
 

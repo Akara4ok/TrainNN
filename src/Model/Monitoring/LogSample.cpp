@@ -10,7 +10,7 @@ std::string LogSample::getSerializableNames() {
 
 std::ostream& operator<<(std::ostream& os, const LogSample& log) {
     os << log.epoch << ",";
-    if(log.batch_no == -1){
+    if (log.batch_no == -1) {
         os << ",," << log.val_loss << "," << log.val_acc << ",";
     } else {
         os << log.batch_no << "," << log.loss << ",,,";

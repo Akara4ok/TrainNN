@@ -10,7 +10,7 @@
 #include <string>
 #include <chrono>
 
-enum class Verbose{
+enum class Verbose {
     None,
     All
 };
@@ -21,17 +21,20 @@ class Monitoring {
     int batchSize{};
     int batchCount{};
     int params{};
-    std::chrono::high_resolution_clock::time_point firstTimeStep ;
-    std::chrono::high_resolution_clock::time_point lastTimeStep ;
+    std::chrono::high_resolution_clock::time_point firstTimeStep;
+    std::chrono::high_resolution_clock::time_point lastTimeStep;
 
 public:
     explicit Monitoring(int batchSize, int batchCount, int params, Verbose logLevel = Verbose::All);
+
     void add(int epoch, int batch_no,
              float loss = std::numeric_limits<float>::lowest(),
              float val_loss = std::numeric_limits<float>::lowest(),
              float val_acc = std::numeric_limits<float>::lowest());
+
     void logLastSample();
-    void serialize(std::string logDir);
+
+    void serialize(const std::string& logDir);
 };
 
 

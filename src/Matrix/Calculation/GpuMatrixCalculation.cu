@@ -2,9 +2,7 @@
 // Created by vlad on 4/23/23.
 //
 
-#include <cuda.h>
 #include <curand.h>
-#include <iostream>
 #include "Matrix/Matrix.h"
 #include "Cuda/CudaHelper.cuh"
 #include "Cuda/CudaCommonFunctions.cuh"
@@ -21,26 +19,23 @@
 
 Matrix GpuMatrixCalculation::sum(const Matrix& matrix, int axis) {
     Matrix result(axis == 0 ? matrix.getHeight() : 1,
-           axis == 1 ? matrix.getWidth() : 1,
-           Provider::GPU);
+                  axis == 1 ? matrix.getWidth() : 1,
+                  Provider::GPU);
 
-    int new_width = axis == 1 ? matrix.getWidth() : 1;
-    int new_height = axis == 0 ? matrix.getHeight() : 1;
-//    CudaHelper::allocateGpuMemory(&gpuData, new_width * new_height);
     result.zeroInit();
     float* gpuData = result.getGpuData();
 
     int threadsNumX, blocksNumX, threadsNumY, blocksNumY;
     CudaHelper::calculateBlockThreadNum(threadsNumX, threadsNumY,
                                         blocksNumX, blocksNumY,
-                                        matrix.getHeight(), matrix.getWidth()); //забагато
+                                        matrix.getHeight(), matrix.getWidth());
     const dim3 threads(threadsNumX, threadsNumY, 1);
     const dim3 blocks(blocksNumX, blocksNumY, 1);
     GPU::sum<<<blocks, threads>>>(gpuData,
             matrix.getGpuData(),
             matrix.getHeight(),
             matrix.getWidth(),
-            axis); //забагато
+            axis);
 
     return result;
 }
@@ -63,7 +58,7 @@ Matrix GpuMatrixCalculation::multiply(const Matrix& lhs, const Matrix& rhs) {
             lhs.getWidth(),
             rhs.getWidth());
 
-    return Matrix(gpuData, lhs.getHeight(), rhs.getWidth(), Provider::GPU);
+    return {gpuData, lhs.getHeight(), rhs.getWidth(), Provider::GPU};
 }
 
 Matrix GpuMatrixCalculation::exp(const Matrix& matrix) {
@@ -81,7 +76,7 @@ Matrix GpuMatrixCalculation::exp(const Matrix& matrix) {
             matrix.getHeight(),
             matrix.getWidth());
 
-    return Matrix(gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU);
+    return {gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU};
 }
 
 void GpuMatrixCalculation::exp_inline(Matrix& matrix) {
@@ -112,7 +107,7 @@ Matrix GpuMatrixCalculation::log(const Matrix& matrix) {
             matrix.getHeight(),
             matrix.getWidth());
 
-    return Matrix(gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU);
+    return {gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU};
 }
 
 void GpuMatrixCalculation::log_inline(Matrix& matrix) {
@@ -143,7 +138,7 @@ Matrix GpuMatrixCalculation::transpose(const Matrix& matrix) {
             matrix.getHeight(),
             matrix.getWidth());
 
-    return Matrix(gpuData, matrix.getWidth(), matrix.getHeight(), Provider::GPU);
+    return {gpuData, matrix.getWidth(), matrix.getHeight(), Provider::GPU};
 }
 
 void GpuMatrixCalculation::transpose_inline(Matrix& matrix) {
@@ -183,7 +178,7 @@ Matrix GpuMatrixCalculation::elementWiseMultiply(const Matrix& lhs, const Matrix
             rhs.getHeight(),
             rhs.getWidth());
 
-    return Matrix(gpuData, lhs.getHeight(), lhs.getWidth(), Provider::GPU);
+    return {gpuData, lhs.getHeight(), lhs.getWidth(), Provider::GPU};
 }
 
 Matrix GpuMatrixCalculation::elementWiseDivide(const Matrix& lhs, const Matrix& rhs) {
@@ -204,7 +199,7 @@ Matrix GpuMatrixCalculation::elementWiseDivide(const Matrix& lhs, const Matrix& 
             rhs.getHeight(),
             rhs.getWidth());
 
-    return Matrix(gpuData, lhs.getHeight(), lhs.getWidth(), Provider::GPU);
+    return {gpuData, lhs.getHeight(), lhs.getWidth(), Provider::GPU};
 }
 
 Matrix
@@ -226,7 +221,7 @@ GpuMatrixCalculation::clip(const Matrix& matrix, float minBound, float maxBound,
             minBound, maxBound,
             minValueToSet, maxValueToSet);
 
-    return Matrix(gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU);
+    return {gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU};
 }
 
 void GpuMatrixCalculation::clip_inline(Matrix& matrix, float minBound, float maxBound, float minValueToSet,
@@ -263,7 +258,7 @@ Matrix GpuMatrixCalculation::sum(const Matrix& lhs, const Matrix& rhs) {
             rhs.getHeight(),
             rhs.getWidth());
 
-    return Matrix(gpuData, lhs.getHeight(), lhs.getWidth(), Provider::GPU);
+    return {gpuData, lhs.getHeight(), lhs.getWidth(), Provider::GPU};
 }
 
 Matrix GpuMatrixCalculation::subtract(const Matrix& lhs, const Matrix& rhs) {
@@ -284,7 +279,7 @@ Matrix GpuMatrixCalculation::subtract(const Matrix& lhs, const Matrix& rhs) {
             rhs.getHeight(),
             rhs.getWidth());
 
-    return Matrix(gpuData, lhs.getHeight(), lhs.getWidth(), Provider::GPU);
+    return {gpuData, lhs.getHeight(), lhs.getWidth(), Provider::GPU};
 }
 
 Matrix GpuMatrixCalculation::reciprocal(const Matrix& matrix) {
@@ -302,7 +297,7 @@ Matrix GpuMatrixCalculation::reciprocal(const Matrix& matrix) {
             matrix.getHeight(),
             matrix.getWidth());
 
-    return Matrix(gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU);
+    return {gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU};
 }
 
 void GpuMatrixCalculation::reciprocal_inline(Matrix& matrix) {
@@ -335,10 +330,10 @@ Matrix GpuMatrixCalculation::argmax(const Matrix& matrix, int axis) {
             matrix.getWidth(),
             axis);
 
-    return Matrix(gpuData,
-                  axis == 0 ? matrix.getHeight() : 1,
-                  axis == 1 ? matrix.getWidth() : 1,
-                  Provider::GPU);
+    return {gpuData,
+            axis == 0 ? matrix.getHeight() : 1,
+            axis == 1 ? matrix.getWidth() : 1,
+            Provider::GPU};
 }
 
 void GpuMatrixCalculation::randomInit(Matrix& matrix, int w) {
@@ -362,7 +357,7 @@ void GpuMatrixCalculation::randomInit(Matrix& matrix, int w) {
     const dim3 blocks(blocksNumX, blocksNumY);
     GPU::multiply<<<blocks, threads>>>(gpuData,
             matrix.getHeight(),
-            matrix.getWidth(), sqrt(2.0 / w));
+            matrix.getWidth(), sqrtf(2.f / static_cast<float>(w)));
     matrix.setGpuData(gpuData);
 }
 

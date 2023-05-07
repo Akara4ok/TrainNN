@@ -8,6 +8,8 @@
 #include "Matrix/Matrix.h"
 
 class Accuracy {
+    constexpr static const float THRESHOLD = 0.0001;
+
     static float calculateBinary(const Matrix& pred_y, const Matrix& test_y);
 
     static float calculateMultiClass(const Matrix& pred_y, const Matrix& test_y);

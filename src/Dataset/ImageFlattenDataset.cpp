@@ -53,9 +53,9 @@ ImageFlattenDataset::createDataset(const std::string& folderPath, int imageHeigh
     }
 
     if (batchSize == -1) {
-        dataset->batchSize = singleBatchData.size();
+        dataset->batchSize = static_cast<int>(singleBatchData.size());
     }
-    int datasetSize = singleBatchData.size();
+    int datasetSize = static_cast<int>(singleBatchData.size());
     int batchNum = (datasetSize + dataset->batchSize - 1) / dataset->batchSize;
     for (int i = 0; i < batchNum; ++i) {
         auto dataBegin = singleBatchData.begin() + i * dataset->batchSize;
@@ -70,9 +70,9 @@ ImageFlattenDataset::createDataset(const std::string& folderPath, int imageHeigh
     return dataset;
 }
 
-Matrix ImageFlattenDataset::preprocessImage(std::string imagePath, int height, int width) {
+Matrix ImageFlattenDataset::preprocessImage(const std::string& imagePath, int height, int width) {
     cv::Mat image = imread(imagePath, cv::IMREAD_GRAYSCALE);
-    cv::resize(image, image, cv::Size(height, width));
+    cv::resize(image, image, cv::Size(width, height));
     image.convertTo(image, CV_32F, 1.0 / 255, 0);
     auto* data = image.ptr<float>(0);
     Matrix matrix(data, height * width, 1);
@@ -91,15 +91,15 @@ Matrix::Ptr ImageFlattenDataset::preprocessImage(std::string imagePath) {
 Matrix::Ptr ImageFlattenDataset::preprocessLabel(std::string imagePath) {
     Matrix::Ptr label(new Matrix(1, 1));
     if (labelsNames.size() > 2) {
-        label.reset(new Matrix(labelsNames.size(), 1));
+        label.reset(new Matrix(static_cast<int>(labelsNames.size()), 1));
     }
     label->zeroInit();
     std::string labelName = std::filesystem::path(imagePath).parent_path().filename();
     auto it = std::find(labelsNames.begin(), labelsNames.end(), labelName);
     if (labelsNames.size() == 2) {
-        label->get(0, 0) = std::distance(labelsNames.begin(), it);
+        label->get(0, 0) = static_cast<float>(std::distance(labelsNames.begin(), it));
     } else {
-        int classIndex = std::distance(labelsNames.begin(), it);
+        int classIndex = static_cast<int>(std::distance(labelsNames.begin(), it));
         label->get(classIndex, 0) = 1;
     }
     return label;

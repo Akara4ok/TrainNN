@@ -17,7 +17,7 @@ public:
     ImageFlattenDataset(const std::string& folderPath, int imageHeight, int imageWidth,
                         int batchSize = -1, int seed = 42);
 
-    static Matrix preprocessImage(std::string imagePath, int height, int width);
+    static Matrix preprocessImage(const std::string& imagePath, int height, int width);
 
     Matrix::Ptr preprocessImage(std::string imagePath) override;
 

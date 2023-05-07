@@ -17,31 +17,18 @@ namespace GPU {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
         const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
         if ((row < height) && (col < width)) {
-//            if(axis == -1){
-//                for (int i = 0; i < height; i++){
-//                    for (int j = 0; j < width; j++){
-//                        result[0] += data[i * width + j];
-//                    }
-//                }
-//            }
-//            if(axis == 0){
-//                for (int j = 0; j < width; j++){
-//                    result[row] += data[row * width + j];
-//                }
-//            }
-//            if(axis == 1){
-//                for (int i = 0; i < width; i++){
-//                    result[col] += data[i * width + col];
-//                }
-//            }
-            if (axis == -1) {
-                atomicAdd(result, data[row * width + col]);
-            }
-            if (axis == 0) {
-                atomicAdd(result + row, data[row * width + col]);
-            }
-            if (axis == 1) {
-                atomicAdd(result + col, data[row * width + col]);
+            switch (axis) {
+                case -1:
+                    atomicAdd(result, data[row * width + col]);
+                    break;
+                case 0:
+                    atomicAdd(result + row, data[row * width + col]);
+                    break;
+                case 1:
+                    atomicAdd(result + col, data[row * width + col]);
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -72,7 +59,7 @@ namespace GPU {
                 for (int i = 0; i < width; i++) {
                     if (data[i] > maxValue) {
                         maxValue = data[i];
-                        maxInd = i;
+                        maxInd = static_cast<float>(i);
                     }
                 }
                 result[threadId] = maxInd;
@@ -84,7 +71,7 @@ namespace GPU {
                 for (int i = 0; i < height; i++) {
                     if (data[i * width + threadId] > maxValue) {
                         maxValue = data[i * width + threadId];
-                        maxInd = i;
+                        maxInd = static_cast<float>(i);
                     }
                 }
                 result[threadId] = maxInd;

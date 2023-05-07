@@ -74,10 +74,10 @@ Matrix::Matrix(Matrix&& other) noexcept: height(other.height), width(other.width
 Matrix& Matrix::operator=(Matrix&& other) noexcept {
     height = other.height;
     width = other.width;
-    if(isUseCpu){
+    if (isUseCpu) {
         delete[] data;
     }
-    if(isUseGpu){
+    if (isUseGpu) {
         CudaHelper::deleteGpuMemory(gpuData);
     }
     data = other.data;
@@ -191,10 +191,10 @@ void Matrix::randomInit(int w) {
 }
 
 void Matrix::zeroInit() {
-    if(isUseCpu){
+    if (isUseCpu) {
         calculation[Provider::CPU]->zeroInit(*this);
     }
-    if(isUseGpu){
+    if (isUseGpu) {
         calculation[Provider::GPU]->zeroInit(*this);
     }
 }
@@ -351,7 +351,7 @@ Matrix::Ptr Matrix::merge(std::vector<Matrix::Ptr>::iterator begin,
                           std::vector<Matrix::Ptr>::iterator end,
                           int axis) {
     if (axis == 0) {
-        int count = std::distance(begin, end);
+        int count = static_cast<int>(std::distance(begin, end));
         int newHeight = (*begin)->getHeight();
         int newWidth = (*begin)->getWidth() * count;
         Matrix::Ptr result(new Matrix(newHeight, newWidth));

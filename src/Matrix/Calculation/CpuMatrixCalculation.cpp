@@ -237,7 +237,7 @@ Matrix CpuMatrixCalculation::argmax(const Matrix& matrix, int axis) {
                     maxInd = j;
                 }
             }
-            result[i][0] = maxInd;
+            result[i][0] = static_cast<float>(maxInd);
         }
         return result;
     } else if (axis == 1) {
@@ -251,7 +251,7 @@ Matrix CpuMatrixCalculation::argmax(const Matrix& matrix, int axis) {
                     maxInd = j;
                 }
             }
-            result[0][i] = maxInd;
+            result[0][i] = static_cast<float>(maxInd);
         }
         return result;
     }
@@ -265,7 +265,7 @@ void CpuMatrixCalculation::randomInit(Matrix& matrix, int w) {
 
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
-            matrix[i][j] = dist(gen) * sqrt(2.0 / w);
+            matrix[i][j] = static_cast<float>(dist(gen) * sqrt(2.0 / w));
         }
     }
 }

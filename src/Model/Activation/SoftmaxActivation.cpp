@@ -3,7 +3,6 @@
 //
 
 #include "Model/Activation/SoftmaxActivation.h"
-#include <iostream>
 
 Matrix SoftmaxActivation::calculate(const Matrix& matrix) {
     Matrix exp_matrix = Matrix::exp(matrix);

@@ -6,15 +6,12 @@
 //
 
 #include <iostream>
-#include <memory>
 #include <algorithm>
 #include "config.hpp"
 #include "Model/Model.h"
 #include "Model/Layer/Linear.h"
 #include "Dataset/ImageFlattenDataset.h"
 #include "Model/Activation/SoftmaxActivation.h"
-
-#include "Model/Metrics/Accuracy.h"
 
 int main() {
     Config::getInstance().setProvider(Provider::GPU);
@@ -46,10 +43,10 @@ int main() {
     std::cout << "Datasets have been read!" << std::endl;
 
     Model::Ptr model(new Model({
-                                   new Linear(70, Activation::Relu),
-//                                   new Linear(70, Activation::Relu),
-//                                   new Linear(70, Activation::Relu),
-                                   new Linear(10, Activation::Softmax)
+                                       new Linear(70, Activation::Relu),
+//                                       new Linear(70, Activation::Relu),
+//                                       new Linear(70, Activation::Relu),
+                                       new Linear(10, Activation::Softmax)
                                }, image_height * image_width));
 
     model->compile(0.01, Cost::CrossEntropy);
@@ -67,11 +64,5 @@ int main() {
 
 //    model->serialize("../Models/model.txt");
 
-//    model->serialize("../Models/model.txt");
-//    auto pred = model->predict(x);
-//    for (const auto& matrix : pred) {
-//        std::cout << *matrix;
-//    }
-//    model->test(train_x, train_y);
     model->test(val_x, val_y);
 }

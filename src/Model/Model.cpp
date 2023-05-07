@@ -10,8 +10,12 @@
 #include "Model/CostFunction/CrossEntropy.h"
 #include "Model/Metrics/Accuracy.h"
 
+Model::Model(int inputSize) : inputSize(inputSize) {
+
+}
+
 Model::Model(std::initializer_list<ILayer*> layersPtr, int inputSize) : inputSize(inputSize) {
-    for (auto layer : layersPtr) {
+    for (auto layer: layersPtr) {
         add(layer);
     }
 }
@@ -30,7 +34,7 @@ void Model::add(ILayer::Ptr&& layer) {
     layers.push_back(std::move(layer));
 }
 
-int Model::getNumberOfParams() {
+int Model::getNumberOfParams() const {
     return numberOfParameters;
 }
 
@@ -50,9 +54,9 @@ void Model::compile(float learningRate_, Cost costType_) {
 
 void
 Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
-             const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y, std::string logFolder) {
-    Monitoring monitoring(train_x[0]->getWidth(), train_x.size(),
-                          numberOfParameters, verb);
+             const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y,
+             const std::string& logFolder) {
+    Monitoring monitoring(train_x[0]->getWidth(), static_cast<int>(train_x.size()), numberOfParameters, verb);
     for (int e = 0; e < epochs; ++e) {
         for (int t = 0; t < train_x.size(); ++t) {
             Matrix current(*train_x[t]);
@@ -67,7 +71,7 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
             }
             float cost = costFunction->calculate(current, current_y);
             Matrix dCurrent = costFunction->derivative(current, current_y);
-            for (int i = layers.size() - 1; i >= 0; i--) {
+            for (int i = static_cast<int>(layers.size() - 1); i >= 0; i--) {
                 dCurrent = layers[i]->backward(dCurrent, current_y.getWidth(), learningRate);
                 layers[i]->clearCache();
             }
@@ -81,34 +85,34 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
         for (int t = 0; t < val_x.size(); ++t) {
             Matrix current_val_x(*val_x[t]);
             Matrix current_val_y(*val_y[t]);
-            if(Config::getInstance().getProvider() == Provider::GPU){
+            if (Config::getInstance().getProvider() == Provider::GPU) {
                 current_val_x.copyCpuToGpu();
                 current_val_y.copyCpuToGpu();
             }
             Matrix val_predict = predict(current_val_x);
             datasetSize += val_x[t]->getWidth();
-            val_loss += costFunction->calculate(val_predict, current_val_y) * val_x[t]->getWidth();
-            val_accuracy += Accuracy::calculate(val_predict, current_val_y) * val_x[t]->getWidth();
+            val_loss += costFunction->calculate(val_predict, current_val_y) * static_cast<float>(val_x[t]->getWidth());
+            val_accuracy += Accuracy::calculate(val_predict, current_val_y) * static_cast<float>(val_x[t]->getWidth());
         }
-        val_loss /= datasetSize;
-        val_accuracy /= datasetSize;
+        val_loss /= static_cast<float>(datasetSize);
+        val_accuracy /= static_cast<float>(datasetSize);
         monitoring.add(e, -1, std::numeric_limits<float>::lowest(), val_loss, val_accuracy);
         monitoring.logLastSample();
     }
-    if(!logFolder.empty()){
+    if (!logFolder.empty()) {
         monitoring.serialize(logFolder);
     }
 }
 
 Matrix Model::predict(const Matrix& input) {
     Matrix current(input);
-    if(Config::getInstance().getProvider() == Provider::GPU){
+    if (Config::getInstance().getProvider() == Provider::GPU) {
         current.copyCpuToGpu();
     }
     for (const auto& layer: layers) {
         current = layer->forward(current);
     }
-    if(Config::getInstance().getProvider() == Provider::GPU){
+    if (Config::getInstance().getProvider() == Provider::GPU) {
         current.copyGpuToCpu();
     }
     return current;
@@ -129,16 +133,16 @@ void Model::test(std::vector<Matrix::Ptr> test_x, std::vector<Matrix::Ptr> test_
     for (int t = 0; t < test_x.size(); ++t) {
         Matrix val_predict = predict(*test_x[t]);
         Matrix current_test_y(*test_y[t]);
-        if(Config::getInstance().getProvider() == Provider::GPU){
+        if (Config::getInstance().getProvider() == Provider::GPU) {
             current_test_y.copyCpuToGpu();
         }
         datasetSize += test_x[t]->getWidth();
-        test_loss += costFunction->calculate(val_predict, current_test_y) * test_y[t]->getWidth();
-        test_accuracy += Accuracy::calculate(val_predict, current_test_y) * test_y[t]->getWidth();
+        test_loss += costFunction->calculate(val_predict, current_test_y) * static_cast<float>(test_y[t]->getWidth());
+        test_accuracy += Accuracy::calculate(val_predict, current_test_y) * static_cast<float>(test_y[t]->getWidth());
     }
     std::cout << "Test: ";
-    std::cout << "test_loss: " << test_loss / datasetSize << " - ";
-    std::cout << "test_accuracy: " << test_accuracy / datasetSize << " ";
+    std::cout << "test_loss: " << test_loss / static_cast<float>(datasetSize) << " - ";
+    std::cout << "test_accuracy: " << test_accuracy / static_cast<float>(datasetSize) << " ";
     std::cout << std::endl;
 }
 
