@@ -10,12 +10,28 @@
 #include "Model/CostFunction/CrossEntropy.h"
 #include "Model/Metrics/Accuracy.h"
 
-Model::Model(int inputSize) : inputSize(inputSize) {}
+Model::Model(std::initializer_list<ILayer*> layersPtr, int inputSize) : inputSize(inputSize) {
+    for (auto layer : layersPtr) {
+        add(layer);
+    }
+}
+
+void Model::add(ILayer* layer) {
+    int previousNeurons = layers.empty() ? inputSize : layers.back()->getHidden();
+    numberOfParameters += previousNeurons * layer->getHidden() + layer->getHidden();
+    layer->initWeights(previousNeurons);
+    layers.emplace_back(layer);
+}
 
 void Model::add(ILayer::Ptr&& layer) {
     int previousNeurons = layers.empty() ? inputSize : layers.back()->getHidden();
+    numberOfParameters += previousNeurons * layer->getHidden() + layer->getHidden();
     layer->initWeights(previousNeurons);
     layers.push_back(std::move(layer));
+}
+
+int Model::getNumberOfParams() {
+    return numberOfParameters;
 }
 
 void Model::compile(float learningRate_, Cost costType_) {
@@ -35,7 +51,8 @@ void Model::compile(float learningRate_, Cost costType_) {
 void
 Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
              const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y, std::string logFolder) {
-    Monitoring monitoring(train_x[0]->getWidth(), train_x.size(), verb);
+    Monitoring monitoring(train_x[0]->getWidth(), train_x.size(),
+                          numberOfParameters, verb);
     for (int e = 0; e < epochs; ++e) {
         for (int t = 0; t < train_x.size(); ++t) {
             Matrix current(*train_x[t]);

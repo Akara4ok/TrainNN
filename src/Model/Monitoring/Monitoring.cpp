@@ -8,8 +8,8 @@
 #include <filesystem>
 #include "config.hpp"
 
-Monitoring::Monitoring(int batchSize, int batchCount, Verbose logLevel)
-: batchSize(batchSize), batchCount(batchCount), logLevel(logLevel) {
+Monitoring::Monitoring(int batchSize, int batchCount, int params, Verbose logLevel)
+: batchSize(batchSize), batchCount(batchCount), params(params), logLevel(logLevel) {
     firstTimeStep = std::chrono::high_resolution_clock::now();
     lastTimeStep = std::chrono::high_resolution_clock::now();
 }
@@ -67,10 +67,10 @@ void Monitoring::serialize(std::string logDir) {
     bool metadataExists = std::filesystem::exists(Config::getInstance().getLogDir() + "/metadata.csv");
     std::ofstream metadata_out(Config::getInstance().getLogDir() + "/metadata.csv", std::ios_base::app);
     if(!metadataExists){
-        metadata_out << "log_dir,epochs,batch_size,batch_count,total_time\n";
+        metadata_out << "log_dir,epochs,batch_size,batch_count,params,total_time\n";
     }
     metadata_out << logDir << "," << history.back().epoch + 1 << ","
-        << batchSize << "," << batchCount << ",";
+        << batchSize << "," << batchCount << "," << params << ",";
 
     std::chrono::duration<float> duration_float = lastTimeStep - firstTimeStep;
     metadata_out << duration_float.count() << "\n";

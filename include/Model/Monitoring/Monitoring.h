@@ -20,11 +20,12 @@ class Monitoring {
     std::vector<LogSample> history;
     int batchSize{};
     int batchCount{};
+    int params{};
     std::chrono::high_resolution_clock::time_point firstTimeStep ;
     std::chrono::high_resolution_clock::time_point lastTimeStep ;
 
 public:
-    explicit Monitoring(int batchSize, int batchCount, Verbose logLevel = Verbose::All);
+    explicit Monitoring(int batchSize, int batchCount, int params, Verbose logLevel = Verbose::All);
     void add(int epoch, int batch_no,
              float loss = std::numeric_limits<float>::lowest(),
              float val_loss = std::numeric_limits<float>::lowest(),

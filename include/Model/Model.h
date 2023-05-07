@@ -18,14 +18,18 @@ class Model {
     Cost costType{};
     ICostFunction::Ptr costFunction;
     std::vector<ILayer::Ptr> layers;
+    int numberOfParameters = 0;
 public:
     typedef std::unique_ptr<Model> Ptr;
 
     Model() = default;
 
-    explicit Model(int inputSize);
+    explicit Model(std::initializer_list<ILayer*> layers, int inputSize);
 
+    void add(ILayer* layer);
     void add(ILayer::Ptr&& layer);
+
+    int getNumberOfParams();
 
     void compile(float learningRate_, Cost costType_);
 

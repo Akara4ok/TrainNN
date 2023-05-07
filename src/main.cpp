@@ -37,19 +37,21 @@ int main() {
     auto val_y = val_dataset->getLabel();
 
     ImageFlattenDataset::Ptr test_dataset =
-        ImageFlattenDataset::createDataset("../Data/mnistTest",
-                                           image_height, image_width);
+            ImageFlattenDataset::createDataset("../Data/mnistTest",
+                                               image_height, image_width);
 
     auto test_x = test_dataset->getData();
     auto test_y = test_dataset->getLabel();
 
     std::cout << "Datasets have been read!" << std::endl;
-    Model::Ptr model(new Model(image_height * image_width));
-    model->add(std::make_unique<Linear>(70, Activation::Relu));
-//    model->add(std::make_unique<Linear>(70, Activation::Relu));
-//    model->add(std::make_unique<Linear>(70, Activation::Relu));
-//    model->add(std::make_unique<Linear>(5, Activation::Relu));
-    model->add(std::make_unique<Linear>(10, Activation::Softmax));
+
+    Model::Ptr model(new Model({
+                                   new Linear(70, Activation::Relu),
+//                                   new Linear(70, Activation::Relu),
+//                                   new Linear(70, Activation::Relu),
+                                   new Linear(10, Activation::Softmax)
+                               }, image_height * image_width));
+
     model->compile(0.01, Cost::CrossEntropy);
 
     model->train(30, Verbose::All, train_x, train_y, val_x, val_y, "../Logs/v1");
