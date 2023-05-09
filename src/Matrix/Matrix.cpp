@@ -20,12 +20,20 @@ static int initCalculationCaller = []() {
     return 0;
 }();
 
+Provider Matrix::lastProvider = Provider::CPU;
+std::shared_ptr<IMatrixCalculation> Matrix::currentAlgo;
+
 Matrix::Matrix(int height, int width, Provider initProvider)
         : height(height), width(width) {
     isUseCpu = initProvider == Provider::CPU;
     isUseGpu = initProvider == Provider::GPU;
     if (isUseCpu) {
         data = new float[height * width];
+    }
+
+    if(lastProvider != Config::getInstance().getProvider()){
+        lastProvider = Config::getInstance().getProvider();
+        currentAlgo = calculation[Config::getInstance().getProvider()];
     }
 }
 
@@ -187,7 +195,7 @@ void Matrix::moveGpuToCpu() {
 }
 
 void Matrix::randomInit(int w) {
-    calculation[Config::getInstance().getProvider()]->randomInit(*this, w);
+    currentAlgo->randomInit(*this, w);
 }
 
 void Matrix::zeroInit() {
@@ -219,7 +227,7 @@ std::ostream& operator<<(std::ostream& os, const Matrix& matrix) {
 }
 
 float Matrix::sum() const {
-    Matrix result = calculation[Config::getInstance().getProvider()]->sum(*this, -1);
+    Matrix result = currentAlgo->sum(*this, -1);
     if (Config::getInstance().getProvider() == Provider::GPU) {
         result.copyGpuToCpu();
     }
@@ -227,51 +235,51 @@ float Matrix::sum() const {
 }
 
 Matrix Matrix::sum(const Matrix& matrix, int axis) {
-    return calculation[Config::getInstance().getProvider()]->sum(matrix, axis);
+    return currentAlgo->sum(matrix, axis);
 }
 
 Matrix Matrix::multiply(const Matrix& lhs, const Matrix& rhs) {
-    return calculation[Config::getInstance().getProvider()]->multiply(lhs, rhs);
+    return currentAlgo->multiply(lhs, rhs);
 }
 
 void Matrix::exp() {
-    calculation[Config::getInstance().getProvider()]->exp_inline(*this);
+    currentAlgo->exp_inline(*this);
 }
 
 Matrix Matrix::exp(const Matrix& matrix) {
-    return calculation[Config::getInstance().getProvider()]->exp(matrix);
+    return currentAlgo->exp(matrix);
 }
 
 void Matrix::log() {
-    calculation[Config::getInstance().getProvider()]->log_inline(*this);
+    currentAlgo->log_inline(*this);
 }
 
 Matrix Matrix::log(const Matrix& matrix) {
-    return calculation[Config::getInstance().getProvider()]->log(matrix);
+    return currentAlgo->log(matrix);
 }
 
 void Matrix::transpose() {
-    calculation[Config::getInstance().getProvider()]->transpose_inline(*this);
+    currentAlgo->transpose_inline(*this);
 }
 
 Matrix Matrix::transpose(const Matrix& matrix) {
-    return calculation[Config::getInstance().getProvider()]->transpose(matrix);
+    return currentAlgo->transpose(matrix);
 }
 
 void Matrix::clip(float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
-    calculation[Config::getInstance().getProvider()]->clip_inline(*this,
+    currentAlgo->clip_inline(*this,
                                                                   minBound, maxBound,
                                                                   minValueToSet, maxValueToSet);
 }
 
 Matrix Matrix::clip(const Matrix& matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
-    return calculation[Config::getInstance().getProvider()]->clip(matrix,
+    return currentAlgo->clip(matrix,
                                                                   minBound, maxBound,
                                                                   minValueToSet, maxValueToSet);
 }
 
 Matrix Matrix::operator+(const Matrix& rhs) const {
-    return calculation[Config::getInstance().getProvider()]->sum(*this, rhs);
+    return currentAlgo->sum(*this, rhs);
 }
 
 Matrix Matrix::operator+(float value) const {
@@ -280,7 +288,7 @@ Matrix Matrix::operator+(float value) const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->sum(*this, matrix);
+    return currentAlgo->sum(*this, matrix);
 }
 
 Matrix Matrix::operator-() const {
@@ -289,11 +297,11 @@ Matrix Matrix::operator-() const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
+    return currentAlgo->elementWiseMultiply(*this, matrix);
 }
 
 Matrix Matrix::operator-(const Matrix& rhs) const {
-    return calculation[Config::getInstance().getProvider()]->subtract(*this, rhs);
+    return currentAlgo->subtract(*this, rhs);
 }
 
 Matrix Matrix::operator-(float value) const {
@@ -302,11 +310,11 @@ Matrix Matrix::operator-(float value) const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->subtract(*this, matrix);
+    return currentAlgo->subtract(*this, matrix);
 }
 
 Matrix Matrix::operator*(const Matrix& rhs) const {
-    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, rhs);
+    return currentAlgo->elementWiseMultiply(*this, rhs);
 }
 
 Matrix Matrix::operator*(float value) const {
@@ -315,11 +323,11 @@ Matrix Matrix::operator*(float value) const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
+    return currentAlgo->elementWiseMultiply(*this, matrix);
 }
 
 Matrix Matrix::operator/(const Matrix& rhs) const {
-    return calculation[Config::getInstance().getProvider()]->elementWiseDivide(*this, rhs);
+    return currentAlgo->elementWiseDivide(*this, rhs);
 }
 
 Matrix Matrix::operator/(float value) const {
@@ -328,7 +336,7 @@ Matrix Matrix::operator/(float value) const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->elementWiseDivide(*this, matrix);
+    return currentAlgo->elementWiseDivide(*this, matrix);
 }
 
 float* Matrix::operator[](int index) {
@@ -340,11 +348,11 @@ float* Matrix::operator[](int index) const {
 }
 
 void Matrix::reciprocal() {
-    calculation[Config::getInstance().getProvider()]->reciprocal_inline(*this);
+    currentAlgo->reciprocal_inline(*this);
 }
 
 Matrix Matrix::reciprocal(const Matrix& matrix) {
-    return calculation[Config::getInstance().getProvider()]->reciprocal(matrix);
+    return currentAlgo->reciprocal(matrix);
 }
 
 Matrix::Ptr Matrix::merge(std::vector<Matrix::Ptr>::iterator begin,
@@ -370,5 +378,5 @@ Matrix::Ptr Matrix::merge(std::vector<Matrix::Ptr>::iterator begin,
 }
 
 Matrix Matrix::argmax(const Matrix& matrix, int axis) {
-    return calculation[Config::getInstance().getProvider()]->argmax(matrix, axis);
+    return currentAlgo->argmax(matrix, axis);
 }
