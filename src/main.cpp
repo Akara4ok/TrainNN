@@ -60,6 +60,5 @@ int main() {
 //    std::cout << Accuracy::calculate(pred_test_y, *test_y[0]);
 
 //    model->serialize("../Models/model.txt");
-
     model->test(val_x, val_y);
 }
