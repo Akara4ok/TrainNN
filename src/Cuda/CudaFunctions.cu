@@ -3,6 +3,7 @@
 //
 
 #include "Cuda/CudaFunctions.cuh"
+#include "stdio.h"
 
 namespace GPU {
     __global__ void zeroInit(float* data, int height, int width) {
@@ -170,8 +171,8 @@ namespace GPU {
     __global__ void
     multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
              int widthRhs) {
-        const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
-        const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
+        const uint row = (blockIdx.y * blockDim.y) + threadIdx.y;
+        const uint col = (blockIdx.x * blockDim.x) + threadIdx.x;
         if ((row < heightLhs) && (col < widthRhs)) {
             result[row * widthRhs + col] = 0;
             for (int i = 0; i < widthLhs; i++) {
@@ -180,36 +181,196 @@ namespace GPU {
         }
     }
 #endif
-#ifdef CUDA_SHARED_MULT
-    const int TILE_MAX = 32;
+#ifdef CUDA_COALSCING_MULT
     __global__ void
     multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
              int widthRhs) {
-        const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
-        const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
-        __shared__ float A_tile[TILE_MAX][TILE_MAX];
-        __shared__ float B_tile[TILE_MAX][TILE_MAX];
+        const int BLOCKSIZE = 32;
+        const uint row = blockIdx.y * BLOCKSIZE + (threadIdx.x / BLOCKSIZE);
+        const uint col = blockIdx.x * BLOCKSIZE + (threadIdx.x % BLOCKSIZE);
+        if ((row < heightLhs) && (col < widthRhs)) {
+            float acc = 0.0;
+            for (int i = 0; i < widthLhs; i++) {
+                acc += lhsData[row * widthLhs + i] * rhsData[i * widthRhs + col];
+            }
+            result[row * widthRhs + col] = acc;
+        }
+    }
+#endif
+#ifdef CUDA_SHAREDBLOCK_MULT
+    const int BLOCKSIZE = 32;
+    __global__ void
+    multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
+             int widthRhs) {
+        const uint tRow = threadIdx.x / BLOCKSIZE;
+        const uint tCol = threadIdx.x % BLOCKSIZE;
+        const uint row = blockIdx.y * BLOCKSIZE + tRow;
+        const uint col = blockIdx.x * BLOCKSIZE + tCol;
+        __shared__ float A_tile[BLOCKSIZE][BLOCKSIZE];
+        __shared__ float B_tile[BLOCKSIZE][BLOCKSIZE];
         float acc = 0;
-        const int tiles = (TILE_MAX + widthLhs - 1) / TILE_MAX;
+        const int tiles = (BLOCKSIZE + widthLhs - 1) / BLOCKSIZE;
         for (int tile = 0; tile < tiles; tile++){
-            A_tile[threadIdx.y][threadIdx.x] = 0;
-            B_tile[threadIdx.y][threadIdx.x] = 0;
-            const unsigned int col_j = (tile * TILE_MAX) + threadIdx.x;
-            const unsigned int row_j = (tile * TILE_MAX) + threadIdx.y;
+            A_tile[tRow][tCol] = 0;
+            B_tile[tRow][tCol] = 0;
+            const uint col_j = (tile * BLOCKSIZE) + tCol;
+            const uint row_j = (tile * BLOCKSIZE) + tRow;
             if (col_j < widthLhs && row < heightLhs)
-                A_tile[threadIdx.y][threadIdx.x] = lhsData[row * widthLhs + col_j];
+                A_tile[tRow][tCol] = lhsData[row * widthLhs + col_j];
             if(row_j < widthLhs && col < widthRhs)
-                B_tile[threadIdx.y][threadIdx.x] = rhsData[row_j * widthRhs + col];
+                B_tile[tRow][tCol] = rhsData[row_j * widthRhs + col];
             __syncthreads();
 //            printf("%i\n", threadIdx.x);
-            for (int i = 0; i < TILE_MAX; i++){
-                acc += A_tile[threadIdx.y][i] * B_tile[i][threadIdx.x];
+            for (int i = 0; i < BLOCKSIZE; i++){
+                acc += A_tile[tRow][i] * B_tile[i][tCol];
             }
             __syncthreads();
         }
         if ((row < heightLhs) && (col < widthRhs)) {
             result[row * widthRhs + col] = acc;
         }
+    }
+#endif
+#ifdef CUDA_SHARED1D_MULT
+    __global__ void
+    multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
+             int widthRhs) {
+        const int BM = 64;
+        const int BN = 64;
+        const int BK = 8;
+        const int TM = 8;
+
+        const uint tRow = threadIdx.x / BN;
+        const uint tCol = threadIdx.x % BN;
+        __shared__ float A_tile[BM * BK];
+        __shared__ float B_tile[BK * BN];
+
+        const uint innerColA = threadIdx.x % BK; // warp-level GMEM coalescing
+        const uint innerRowA = threadIdx.x / BK;
+        const uint innerColB = threadIdx.x % BN; // warp-level GMEM coalescing
+        const uint innerRowB = threadIdx.x / BN;
+
+        float threadResults[TM] = {0.0};
+
+        for (uint bkIdx = 0; bkIdx < widthLhs; bkIdx += BK) {
+            // populate the SMEM caches
+            A_tile[innerRowA * BK + innerColA] = 0;
+            B_tile[innerRowB * BN + innerColB] = 0;
+            if((blockIdx.y * BM + innerRowA) < heightLhs && bkIdx + innerColA < widthLhs)
+                A_tile[innerRowA * BK + innerColA] = lhsData[(blockIdx.y * BM + innerRowA) * widthLhs + bkIdx + innerColA];
+            if(bkIdx + innerRowB < widthLhs && innerColB + blockIdx.x * BN < widthRhs)
+                B_tile[innerRowB * BN + innerColB] = rhsData[(bkIdx + innerRowB) * widthRhs + innerColB + blockIdx.x * BN];
+            __syncthreads();
+
+
+            // calculate per-thread results
+            for (uint dotIdx = 0; dotIdx < BK; ++dotIdx) {
+                // we make the dotproduct loop the outside loop, which facilitates
+                // reuse of the Bs entry, which we can cache in a tmp var.
+                float tmpB = B_tile[dotIdx * BN + tCol];
+                for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+                    threadResults[resIdx] +=
+                            A_tile[(tRow * TM + resIdx) * BK + dotIdx] * tmpB;
+                }
+            }
+            __syncthreads();
+        }
+
+        for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+            if ((tRow * TM + resIdx + blockIdx.y * BM) < heightLhs && tCol + blockIdx.x * BN< widthRhs)
+                result[(tRow * TM + resIdx + blockIdx.y * BM) * widthRhs + tCol + blockIdx.x * BN] = threadResults[resIdx];
+        }
+    }
+#endif
+#ifdef CUDA_SHARED2D_MULT
+    __global__ void
+    multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
+             int widthRhs) {
+        const int BM = 64;
+        const int BN = 64;
+        const int BK = 8;
+        const int TM = 8;
+        const int TN = 8;
+
+        const uint totalResultsBlocktile = BM * BN;
+        const uint numThreadsBlocktile = totalResultsBlocktile / (TM * TN);
+
+        const uint tRow = threadIdx.x / (BN / TN);
+        const uint tCol = threadIdx.x % (BN / TN);
+        __shared__ float A_tile[BM * BK];
+        __shared__ float B_tile[BK * BN];
+
+        const uint innerColA = threadIdx.x % BK; // warp-level GMEM coalescing
+        const uint innerRowA = threadIdx.x / BK;
+        const uint innerColB = threadIdx.x % BN; // warp-level GMEM coalescing
+        const uint innerRowB = threadIdx.x / BN;
+
+        const uint strideA = numThreadsBlocktile / BK;
+        const uint strideB = numThreadsBlocktile / BN;
+
+        float threadResults[TM * TN] = {0.0};
+
+        float regM[TM] = {0.0};
+        float regN[TN] = {0.0};
+
+        for (uint bkIdx = 0; bkIdx < widthLhs; bkIdx += BK) {
+            // populate the SMEM caches
+            for (uint loadOffset = 0; loadOffset < BM; loadOffset += strideA) {
+                A_tile[(innerRowA + loadOffset) * BK + innerColA] = 0;
+                if(innerRowA + loadOffset + blockIdx.y * BM < heightLhs && bkIdx + innerColA < widthLhs)
+                    A_tile[(innerRowA + loadOffset) * BK + innerColA] =
+                            lhsData[(innerRowA + loadOffset + blockIdx.y * BM) * widthLhs + bkIdx + innerColA];
+            }
+            for (uint loadOffset = 0; loadOffset < BK; loadOffset += strideB) {
+                B_tile[(innerRowB + loadOffset) * BN + innerColB] = 0;
+                if(bkIdx + innerRowB + loadOffset < widthLhs && innerColB + blockIdx.x * BN < widthRhs)
+                    B_tile[(innerRowB + loadOffset) * BN + innerColB] =
+                            rhsData[(bkIdx + innerRowB + loadOffset) * widthRhs + innerColB + blockIdx.x * BN];
+            }
+
+//            lhsData += BK;     // move BK columns to right
+//            rhsData += BK * widthRhs; // move BK rows down
+
+//            A_tile[innerRowA * BK + innerColA] = 0;
+//            B_tile[innerRowB * BN + innerColB] = 0;
+//            if((blockIdx.y * BM + innerRowA) < heightLhs && bkIdx + innerColA < widthLhs)
+//                A_tile[innerRowA * BK + innerColA] = lhsData[(blockIdx.y * BM + innerRowA) * widthLhs + bkIdx + innerColA];
+//            if(bkIdx + innerRowB < widthLhs && innerColB + blockIdx.x * BN < widthRhs)
+//                B_tile[innerRowB * BN + innerColB] = rhsData[(bkIdx + innerRowB) * widthRhs + innerColB + blockIdx.x * BN];
+            __syncthreads();
+
+
+            // calculate per-thread results
+            for (uint dotIdx = 0; dotIdx < BK; ++dotIdx) {
+                // block into registers
+                for (uint i = 0; i < TM; ++i) {
+                    regM[i] = A_tile[(tRow * TM + i) * BK + dotIdx];
+                }
+                for (uint i = 0; i < TN; ++i) {
+                    regN[i] = B_tile[dotIdx * BN + tCol * TN + i];
+                }
+                for (uint resIdxM = 0; resIdxM < TM; ++resIdxM) {
+                    for (uint resIdxN = 0; resIdxN < TN; ++resIdxN) {
+                        threadResults[resIdxM * TN + resIdxN] +=
+                                regM[resIdxM] * regN[resIdxN];
+                    }
+                }
+            }
+            __syncthreads();
+        }
+
+        for (uint resIdxM = 0; resIdxM < TM; ++resIdxM) {
+            for (uint resIdxN = 0; resIdxN < TN; ++resIdxN) {
+                if(tRow * TM + resIdxM + blockIdx.y * BM < heightLhs && tCol * TN + blockIdx.x * BN + resIdxN < widthRhs)
+                    result[(tRow * TM + resIdxM + blockIdx.y * BM) * widthRhs + tCol * TN + blockIdx.x * BN + resIdxN] = threadResults[resIdxM * TN + resIdxN];
+            }
+        }
+
+
+//        for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+//            if ((tRow * TM + resIdx + blockIdx.y * BM) < heightLhs && tCol + blockIdx.x * BN< widthRhs)
+//                result[(tRow * TM + resIdx + blockIdx.y * BM) * widthRhs + tCol + blockIdx.x * BN] = threadResults[resIdx];
+//        }
     }
 #endif
 }

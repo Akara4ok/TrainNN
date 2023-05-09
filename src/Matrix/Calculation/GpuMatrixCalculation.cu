@@ -41,11 +41,23 @@ Matrix GpuMatrixCalculation::multiply(const Matrix& lhs, const Matrix& rhs) {
                                         blocksNumX, blocksNumY,
                                         lhs.getHeight(), rhs.getWidth());
 #endif
-#ifdef CUDA_SHARED_MULT
-    threadsNumX = CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
-    threadsNumY = CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
+#if defined(CUDA_COALSCING_MULT) || defined(CUDA_SHAREDBLOCK_MULT)
+    threadsNumX = CudaHelper::THREAD_PER_TWO_DIM_BLOCK * CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
+    threadsNumY = 1;
     blocksNumX = (rhs.getWidth() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
     blocksNumY = (lhs.getHeight() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
+#endif
+#if defined(CUDA_SHARED1D_MULT)
+    threadsNumX = 64 * 64 / 8;
+    threadsNumY = 1;
+    blocksNumX = (rhs.getWidth() - 1) / 64 + 1;
+    blocksNumY = (lhs.getHeight() - 1) / 64 + 1;
+#endif
+#if defined(CUDA_SHARED2D_MULT)
+    threadsNumX = 64;
+    threadsNumY = 1;
+    blocksNumX = (rhs.getWidth() - 1) / 64 + 1;
+    blocksNumY = (lhs.getHeight() - 1) / 64 + 1;
 #endif
 
     const dim3 threads(threadsNumX, threadsNumY, 1);

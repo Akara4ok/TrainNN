@@ -18,14 +18,14 @@ int main() {
     ImageFlattenDataset::Ptr train_dataset =
             ImageFlattenDataset::createDataset("../Data/mnist/train",
                                                image_height, image_width,
-                                               1024, 10240);
+                                               10240, 10240);
 
     auto train_x = train_dataset->getData();
     auto train_y = train_dataset->getLabel();
     ImageFlattenDataset::Ptr val_dataset =
             ImageFlattenDataset::createDataset("../Data/mnist/test",
                                                image_height, image_width,
-                                               1024, 1024);
+                                               2000, 500);
 
     auto val_x = val_dataset->getData();
     auto val_y = val_dataset->getLabel();
@@ -48,7 +48,7 @@ int main() {
 
     model->compile(0.01, Cost::CrossEntropy);
 
-    model->train(100, Verbose::None, train_x, train_y, val_x, val_y, "../Logs/ManyImagesManyEpochsGpu");
+    model->train(30, Verbose::None, train_x, train_y, val_x, val_y, "../Logs/STANDARD");
 //    model->deserialize("../Models/model.txt");
 
 //    Matrix image = ImageFlattenDataset::preprocessImage("../Data/mnistTest/0/02.jpg",
@@ -61,4 +61,13 @@ int main() {
 
 //    model->serialize("../Models/model.txt");
     model->test(val_x, val_y);
+//    Matrix m1(1000, 1000, Provider::GPU);
+//    m1.zeroInit();
+//    m1 = m1 + 1;
+//    Matrix m2(1000, 1000, Provider::GPU);
+//    m2.zeroInit();
+//    m2 = m2 + 1;
+//    Matrix m3 = Matrix::multiply(m1, m2);
+//    m3.copyGpuToCpu();
+//    std::cout << m3;
 }
