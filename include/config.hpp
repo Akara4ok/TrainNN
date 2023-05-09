@@ -8,6 +8,7 @@
 #include <string>
 
 enum class Provider {
+    None,
     CPU,
     GPU
 };

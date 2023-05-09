@@ -18,14 +18,14 @@ int main() {
     ImageFlattenDataset::Ptr train_dataset =
             ImageFlattenDataset::createDataset("../Data/mnist/train",
                                                image_height, image_width,
-                                               20, 500);
+                                               1024, 10240);
 
     auto train_x = train_dataset->getData();
     auto train_y = train_dataset->getLabel();
     ImageFlattenDataset::Ptr val_dataset =
             ImageFlattenDataset::createDataset("../Data/mnist/test",
                                                image_height, image_width,
-                                               2000, 500);
+                                               1024, 1024);
 
     auto val_x = val_dataset->getData();
     auto val_y = val_dataset->getLabel();
@@ -48,7 +48,7 @@ int main() {
 
     model->compile(0.01, Cost::CrossEntropy);
 
-    model->train(30, Verbose::None, train_x, train_y, val_x, val_y, "../Logs/Shared");
+    model->train(100, Verbose::None, train_x, train_y, val_x, val_y, "../Logs/ManyImagesManyEpochsGpu");
 //    model->deserialize("../Models/model.txt");
 
 //    Matrix image = ImageFlattenDataset::preprocessImage("../Data/mnistTest/0/02.jpg",

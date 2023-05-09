@@ -41,19 +41,25 @@ public:
 
     ~Matrix();
 
-    float& get(int rowIndex, int colIndex);
+    [[nodiscard]] float& get(int rowIndex, int colIndex) const {
+        return (data + rowIndex * width)[colIndex];
+    };
 
-    [[nodiscard]] float get(int rowIndex, int colIndex) const;
+    [[nodiscard]] int getWidth() const {
+        return width;
+    };
 
-    [[nodiscard]] int getWidth() const;
+    [[nodiscard]] int getHeight() const {
+        return height;
+    };
 
-    [[nodiscard]] int getHeight() const;
+    [[nodiscard]] float* getData() const {
+        return data;
+    };
 
-    [[nodiscard]] float* getData() const;
-
-    [[nodiscard]] float* getGpuData() const;
-
-    float* getGpuData();
+    [[nodiscard]] float* getGpuData() const {
+        return gpuData;
+    };
 
     void setNewDataWithSize(float* new_data, int new_height, int new_width);
 
@@ -118,9 +124,13 @@ public:
 
     Matrix operator/(float value) const;
 
-    float* operator[](int index);
+    float* operator[](int index) {
+        return data + index * width;
+    }
 
-    float* operator[](int index) const;
+    float* operator[](int index) const {
+        return data + index * width;
+    }
 
     void reciprocal();
 

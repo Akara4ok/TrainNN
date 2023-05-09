@@ -20,7 +20,7 @@ static int initCalculationCaller = []() {
     return 0;
 }();
 
-Provider Matrix::lastProvider = Provider::CPU;
+Provider Matrix::lastProvider = Provider::None;
 std::shared_ptr<IMatrixCalculation> Matrix::currentAlgo;
 
 Matrix::Matrix(int height, int width, Provider initProvider)
@@ -105,34 +105,6 @@ Matrix::~Matrix() {
     if (isUseGpu) {
         CudaHelper::deleteGpuMemory(gpuData);
     }
-}
-
-float& Matrix::get(int rowIndex, int colIndex) {
-    return (data + rowIndex * width)[colIndex];
-}
-
-float Matrix::get(int rowIndex, int colIndex) const {
-    return (data + rowIndex * width)[colIndex];
-}
-
-int Matrix::getWidth() const {
-    return width;
-}
-
-int Matrix::getHeight() const {
-    return height;
-}
-
-float* Matrix::getData() const {
-    return data;
-}
-
-float* Matrix::getGpuData() const {
-    return gpuData;
-}
-
-float* Matrix::getGpuData() {
-    return gpuData;
 }
 
 void Matrix::setNewDataWithSize(float* new_data, int new_height, int new_width) {
@@ -337,14 +309,6 @@ Matrix Matrix::operator/(float value) const {
         matrix.moveCpuToGpu();
     }
     return currentAlgo->elementWiseDivide(*this, matrix);
-}
-
-float* Matrix::operator[](int index) {
-    return data + index * width;
-}
-
-float* Matrix::operator[](int index) const {
-    return data + index * width;
 }
 
 void Matrix::reciprocal() {
