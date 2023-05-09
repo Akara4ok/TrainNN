@@ -1,11 +1,13 @@
 //
-// Created by vlad on 4/28/23.
+// Created by vlad on 4/27/23.
 //
 
-#ifndef TRAINNN_CUDASTANDARDFUNCTIONS_CUH
-#define TRAINNN_CUDASTANDARDFUNCTIONS_CUH
+#ifndef TRAINNN_CUDAFUNCTIONS_CUH
+#define TRAINNN_CUDAFUNCTIONS_CUH
 
 namespace GPU {
+    __global__ void zeroInit(float* data, int height, int width);
+
     __global__ void multiply(float* data, int height, int width, float value);
 
     __global__ void sum(float* result, const float* data, int height, int width, int axis);
@@ -23,9 +25,6 @@ namespace GPU {
 
     __global__ void transpose(float* result, const float* data, int height, int width);
 
-    __global__ void multiply(float* result, const float* lhsData, const float* rhsData,
-                             int heightLhs, int widthLhs, int widthRhs);
-
     __global__ void sum(float* result, const float* lhsData, const float* rhsData,
                         int heightLhs, int widthLhs, int heightRhs, int widthRhs);
 
@@ -37,6 +36,9 @@ namespace GPU {
 
     __global__ void elementWiseDivide(float* result, const float* lhsData, const float* rhsData,
                                       int heightLhs, int widthLhs, int heightRhs, int widthRhs);
+
+    __global__ void multiply(float* result, const float* lhsData, const float* rhsData,
+                             int heightLhs, int widthLhs, int widthRhs);
 }
 
-#endif //TRAINNN_CUDASTANDARDFUNCTIONS_CUH
+#endif //TRAINNN_CUDAFUNCTIONS_CUH

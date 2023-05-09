@@ -8,11 +8,11 @@
 #include "Matrix/Calculation/CpuMatrixCalculation.h"
 #include "Matrix/Calculation/GpuMatrixCalculation.cuh"
 
-std::map<Provider, IMatrixCalculation::Ptr> Matrix::calculation;
+std::map<Provider, std::shared_ptr<IMatrixCalculation>> Matrix::calculation;
 
 void Matrix::initCalculation() {
-    calculation.emplace(Provider::CPU, std::make_unique<CpuMatrixCalculation>());
-    calculation.emplace(Provider::GPU, std::make_unique<GpuMatrixCalculation>());
+    calculation.emplace(Provider::CPU, std::make_shared<CpuMatrixCalculation>());
+    calculation.emplace(Provider::GPU, std::make_shared<GpuMatrixCalculation>());
 }
 
 static int initCalculationCaller = []() {

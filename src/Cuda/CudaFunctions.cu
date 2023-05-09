@@ -1,10 +1,18 @@
 //
-// Created by vlad on 4/28/23.
+// Created by vlad on 4/27/23.
 //
 
-#include "../../include/Cuda/CudaStandardFunctions.cuh"
+#include "Cuda/CudaFunctions.cuh"
 
 namespace GPU {
+    __global__ void zeroInit(float* data, int height, int width) {
+        const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
+        const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
+        if ((row < height) && (col < width)) {
+            data[row * width + col] = 0;
+        }
+    }
+
     __global__ void multiply(float* data, int height, int width, float value) {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
         const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -111,19 +119,6 @@ namespace GPU {
     }
 
     __global__ void
-    multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
-             int widthRhs) {
-        const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
-        const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
-        if ((row < heightLhs) && (col < widthRhs)) {
-            result[row * widthRhs + col] = 0;
-            for (int i = 0; i < widthLhs; i++) {
-                result[row * widthRhs + col] += lhsData[row * widthLhs + i] * rhsData[i * widthRhs + col];
-            }
-        }
-    }
-
-    __global__ void
     sum(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs, int heightRhs,
         int widthRhs) {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
@@ -170,4 +165,51 @@ namespace GPU {
             result[row * widthLhs + col] = lhsData[row * widthLhs + col] / rhsData[rowRhs * widthRhs + colRhs];
         }
     }
+
+#ifdef CUDA_STANDARD_MULT
+    __global__ void
+    multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
+             int widthRhs) {
+        const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
+        const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
+        if ((row < heightLhs) && (col < widthRhs)) {
+            result[row * widthRhs + col] = 0;
+            for (int i = 0; i < widthLhs; i++) {
+                result[row * widthRhs + col] += lhsData[row * widthLhs + i] * rhsData[i * widthRhs + col];
+            }
+        }
+    }
+#endif
+#ifdef CUDA_SHARED_MULT
+    const int TILE_MAX = 32;
+    __global__ void
+    multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
+             int widthRhs) {
+        const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
+        const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
+        __shared__ float A_tile[TILE_MAX][TILE_MAX];
+        __shared__ float B_tile[TILE_MAX][TILE_MAX];
+        float acc = 0;
+        const int tiles = (TILE_MAX + widthLhs - 1) / TILE_MAX;
+        for (int tile = 0; tile < tiles; tile++){
+            A_tile[threadIdx.y][threadIdx.x] = 0;
+            B_tile[threadIdx.y][threadIdx.x] = 0;
+            const unsigned int col_j = (tile * TILE_MAX) + threadIdx.x;
+            const unsigned int row_j = (tile * TILE_MAX) + threadIdx.y;
+            if (col_j < widthLhs && row < heightLhs)
+                A_tile[threadIdx.y][threadIdx.x] = lhsData[row * widthLhs + col_j];
+            if(row_j < widthLhs && col < widthRhs)
+                B_tile[threadIdx.y][threadIdx.x] = rhsData[row_j * widthRhs + col];
+            __syncthreads();
+//            printf("%i\n", threadIdx.x);
+            for (int i = 0; i < TILE_MAX; i++){
+                acc += A_tile[threadIdx.y][i] * B_tile[i][threadIdx.x];
+            }
+            __syncthreads();
+        }
+        if ((row < heightLhs) && (col < widthRhs)) {
+            result[row * widthRhs + col] = acc;
+        }
+    }
+#endif
 }

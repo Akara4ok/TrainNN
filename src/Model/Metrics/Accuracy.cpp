@@ -19,6 +19,7 @@ float Accuracy::calculateBinary(const Matrix& pred_y, const Matrix& test_y) {
     return static_cast<float>(correct) / static_cast<float>(test_y.getWidth());
 }
 
+#include "iostream"
 float Accuracy::calculateMultiClass(const Matrix& pred_y, const Matrix& test_y) {
     Matrix true_classes = Matrix::argmax(test_y, 1);
     Matrix pred_classes = Matrix::argmax(pred_y, 1);

@@ -17,10 +17,10 @@ add_executable(TrainNN
         src/Model/Model.cpp
         src/Dataset/Dataset.cpp src/Dataset/ImageFlattenDataset.cpp
         src/Model/Metrics/Accuracy.cpp
-        src/Cuda/CudaCommonFunctions.cu src/Cuda/CudaHelper.cu src/Cuda/CudaStandardFunctions.cu
-        src/Cuda/CudaSharedFunctions.cu src/Model/Monitoring/Monitoring.cpp src/Model/Monitoring/LogSample.cpp)
+        src/Cuda/CudaFunctions.cu src/Cuda/CudaHelper.cu
+        src/Model/Monitoring/Monitoring.cpp src/Model/Monitoring/LogSample.cpp)
 
 
 target_link_libraries(TrainNN ${OpenCV_LIBS} -lcurand)
 target_include_directories(TrainNN PUBLIC include/)
-target_compile_definitions(TrainNN PUBLIC CUDA_STANDARD)
+target_compile_definitions(TrainNN PUBLIC CUDA_SHARED_MULT)

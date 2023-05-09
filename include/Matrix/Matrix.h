@@ -17,7 +17,8 @@ class Matrix {
     float* gpuData = nullptr;
     int height = 0;
     int width = 0;
-    static std::map<Provider, std::unique_ptr<IMatrixCalculation>> calculation;
+    static std::map<Provider, std::shared_ptr<IMatrixCalculation>> calculation;
+    std::shared_ptr<IMatrixCalculation> currentAlgo;
     bool isUseCpu = false;
     bool isUseGpu = false;
 public:

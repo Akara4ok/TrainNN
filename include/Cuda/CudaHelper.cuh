@@ -6,9 +6,11 @@
 #define TRAINNN_CUDAHELPER_CUH
 
 class CudaHelper {
-    static const int THREADS_PER_BLOCK = 1024;
-    static const int THREAD_PER_TWO_DIM_BLOCK = 32;
 public:
+    static const int THREADS_PER_BLOCK = 1024;
+
+    static const int THREAD_PER_TWO_DIM_BLOCK = 32;
+
     static void calculateLinearThreadNum(int& threads_x, int& blocks_x, int size);
 
     static void calculateBlockThreadNum(int& threads_x, int& threads_y,

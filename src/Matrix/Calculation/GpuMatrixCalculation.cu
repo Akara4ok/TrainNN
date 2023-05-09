@@ -5,17 +5,8 @@
 #include <curand.h>
 #include "Matrix/Matrix.h"
 #include "Cuda/CudaHelper.cuh"
-#include "Cuda/CudaCommonFunctions.cuh"
+#include "Cuda/CudaFunctions.cuh"
 #include "Matrix/Calculation/GpuMatrixCalculation.cuh"
-
-#ifdef CUDA_STANDARD
-
-#include "Cuda/CudaStandardFunctions.cuh"
-
-#endif
-#ifdef CUDA_SHARED
-#include "Cuda/CudaSharedFunctions.cuh"
-#endif
 
 Matrix GpuMatrixCalculation::sum(const Matrix& matrix, int axis) {
     Matrix result(axis == 0 ? matrix.getHeight() : 1,
@@ -45,9 +36,18 @@ Matrix GpuMatrixCalculation::multiply(const Matrix& lhs, const Matrix& rhs) {
 
     CudaHelper::allocateGpuMemory(&gpuData, lhs.getHeight() * rhs.getWidth());
     int threadsNumX, blocksNumX, threadsNumY, blocksNumY;
+#ifdef CUDA_STANDARD_MULT
     CudaHelper::calculateBlockThreadNum(threadsNumX, threadsNumY,
                                         blocksNumX, blocksNumY,
                                         lhs.getHeight(), rhs.getWidth());
+#endif
+#ifdef CUDA_SHARED_MULT
+    threadsNumX = CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
+    threadsNumY = CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
+    blocksNumX = (rhs.getWidth() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
+    blocksNumY = (lhs.getHeight() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
+#endif
+
     const dim3 threads(threadsNumX, threadsNumY, 1);
     const dim3 blocks(blocksNumX, blocksNumY, 1);
 

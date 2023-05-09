@@ -48,7 +48,7 @@ int main() {
 
     model->compile(0.01, Cost::CrossEntropy);
 
-    model->train(30, Verbose::All, train_x, train_y, val_x, val_y, "../Logs/v1");
+    model->train(30, Verbose::None, train_x, train_y, val_x, val_y, "../Logs/Shared");
 //    model->deserialize("../Models/model.txt");
 
 //    Matrix image = ImageFlattenDataset::preprocessImage("../Data/mnistTest/0/02.jpg",
