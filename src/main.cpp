@@ -61,13 +61,17 @@ int main() {
 
 //    model->serialize("../Models/model.txt");
     model->test(val_x, val_y);
-//    Matrix m1(1000, 1000, Provider::GPU);
-//    m1.zeroInit();
+//    Matrix m1(3, 3, Provider::GPU);
+//    m1.randomInit(1);
 //    m1 = m1 + 1;
-//    Matrix m2(1000, 1000, Provider::GPU);
-//    m2.zeroInit();
-//    m2 = m2 + 1;
-//    Matrix m3 = Matrix::multiply(m1, m2);
+//    m1.copyGpuToCpu();
+//    std::cout << m1;
+//
+////    m1 = m1 + 1;
+////    Matrix m2(1000, 1000, Provider::GPU);
+////    m2.zeroInit();
+////    m2 = m2 + 1;
+//    Matrix m3 = Matrix::sum(m1, 0);
 //    m3.copyGpuToCpu();
 //    std::cout << m3;
 }

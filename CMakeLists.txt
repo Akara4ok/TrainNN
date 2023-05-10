@@ -23,4 +23,4 @@ add_executable(TrainNN
 
 target_link_libraries(TrainNN ${OpenCV_LIBS} -lcurand)
 target_include_directories(TrainNN PUBLIC include/)
-target_compile_definitions(TrainNN PUBLIC CUDA_SHARED2D_MULT)
+target_compile_definitions(TrainNN PUBLIC CUDA_SHARED2D_MULT CUDA_NO_BANK_TRANSPOSE CUDA_SHARED_SUM)

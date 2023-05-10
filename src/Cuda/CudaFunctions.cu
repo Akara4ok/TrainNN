@@ -6,6 +6,14 @@
 #include "stdio.h"
 
 namespace GPU {
+    const int BLOCK_DIM = 32;
+
+    const int BM = 64;
+    const int BN = 64;
+    const int BK = 8;
+    const int TM = 8;
+    const int TN = 8;
+
     __global__ void zeroInit(float* data, int height, int width) {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
         const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -22,6 +30,7 @@ namespace GPU {
         }
     }
 
+#ifdef CUDA_STANDARD_SUM
     __global__ void sum(float* result, const float* data, int height, int width, int axis) {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
         const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -41,6 +50,44 @@ namespace GPU {
             }
         }
     }
+#endif
+#ifdef CUDA_SHARED_SUM
+    __global__ void sum(float* result, const float* data, int height, int width, int axis) {
+        __shared__ float data_tile[BLOCK_DIM][BLOCK_DIM];
+
+        const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
+        const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+        data_tile[threadIdx.y][threadIdx.x] = 0;
+        if((row < height) && (col < width)){
+            data_tile[threadIdx.y][threadIdx.x] = data[row * width + col];
+        }
+
+        __syncthreads();
+
+        if((row < height) && (col < width)){
+            float subSum = 0;
+            if(axis == -1 && threadIdx.x == 0) {
+                for (int i = 0; i < blockDim.x; i++){
+                    subSum += data_tile[threadIdx.y][i];
+                }
+                atomicAdd(result, subSum);
+            }
+            if(axis == 0 && threadIdx.x == 0) {
+                for (int i = 0; i < blockDim.x; i++){
+                    subSum += data_tile[threadIdx.y][i];
+                }
+                atomicAdd(result + row, subSum);
+            }
+            if(axis == 1 && threadIdx.y == 0) {
+                for (int i = 0; i < blockDim.y; i++){
+                    subSum += data_tile[i][threadIdx.x];
+                }
+                atomicAdd(result + col, subSum);
+            }
+        }
+    }
+#endif
 
     __global__ void exp(float* result, const float* data, int height, int width) {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
@@ -111,6 +158,7 @@ namespace GPU {
         }
     }
 
+#ifdef CUDA_STANDARD_TRANSPOSE
     __global__ void transpose(float* result, const float* data, int height, int width) {
         const unsigned int row = (blockIdx.y * blockDim.y) + threadIdx.y;
         const unsigned int col = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -118,6 +166,70 @@ namespace GPU {
             result[col * height + row] = data[row * width + col];
         }
     }
+#endif
+
+#ifdef CUDA_SHARED_TRANSPOSE
+    __global__ void transpose(float *result, const float *data, int height, int width)
+    {
+        __shared__ float data_tile[BLOCK_DIM][BLOCK_DIM];
+
+        // read the matrix tile into shared memory
+            // load one element per thread from device memory (idata) and store it
+            // in transposed order in block[][]
+        uint col = blockIdx.x * BLOCK_DIM + threadIdx.x;
+        uint row = blockIdx.y * BLOCK_DIM + threadIdx.y;
+//        if((col < width) && (row < height))
+//        {
+//            data_tile[threadIdx.y][threadIdx.x] = data[row * width + col];
+//        }
+        for (int j = 0; j < BLOCK_DIM; j += BK) {
+            if ((row + j) < height && col < width)
+                data_tile[threadIdx.y + j][threadIdx.x] = data[(row + j) * width + col];
+        }
+
+
+        __syncthreads();
+
+        for (int j = 0; j < BLOCK_DIM; j += BK)
+            if((row+j) < height && col < width)
+                result[col*height + (row+j)] = data_tile[threadIdx.y+j][threadIdx.x];
+//        if((col < width) && (row < height))
+//        {
+//            result[col * height + row] = data_tile[threadIdx.y][threadIdx.x];
+//        }
+    }
+#endif
+#ifdef CUDA_NO_BANK_TRANSPOSE
+    __global__ void transpose(float *result, const float *data, int height, int width)
+    {
+        __shared__ float data_tile[BLOCK_DIM][BLOCK_DIM + 1];
+
+        // read the matrix tile into shared memory
+        // load one element per thread from device memory (idata) and store it
+        // in transposed order in block[][]
+        uint col = blockIdx.x * BLOCK_DIM + threadIdx.x;
+        uint row = blockIdx.y * BLOCK_DIM + threadIdx.y;
+//        if((col < width) && (row < height))
+//        {
+//            data_tile[threadIdx.y][threadIdx.x] = data[row * width + col];
+//        }
+        for (int j = 0; j < BLOCK_DIM; j += BK) {
+            if ((row + j) < height && col < width)
+                data_tile[threadIdx.y + j][threadIdx.x] = data[(row + j) * width + col];
+        }
+
+
+        __syncthreads();
+
+        for (int j = 0; j < BLOCK_DIM; j += BK)
+            if((row+j) < height && col < width)
+                result[col*height + (row+j)] = data_tile[threadIdx.y+j][threadIdx.x];
+//        if((col < width) && (row < height))
+//        {
+//            result[col * height + row] = data_tile[threadIdx.y][threadIdx.x];
+//        }
+    }
+#endif
 
     __global__ void
     sum(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs, int heightRhs,
@@ -185,9 +297,9 @@ namespace GPU {
     __global__ void
     multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
              int widthRhs) {
-        const int BLOCKSIZE = 32;
-        const uint row = blockIdx.y * BLOCKSIZE + (threadIdx.x / BLOCKSIZE);
-        const uint col = blockIdx.x * BLOCKSIZE + (threadIdx.x % BLOCKSIZE);
+        const int BLOCK_DIM = 32;
+        const uint row = blockIdx.y * BLOCK_DIM + (threadIdx.x / BLOCK_DIM);
+        const uint col = blockIdx.x * BLOCK_DIM + (threadIdx.x % BLOCK_DIM);
         if ((row < heightLhs) && (col < widthRhs)) {
             float acc = 0.0;
             for (int i = 0; i < widthLhs; i++) {
@@ -198,30 +310,29 @@ namespace GPU {
     }
 #endif
 #ifdef CUDA_SHAREDBLOCK_MULT
-    const int BLOCKSIZE = 32;
     __global__ void
     multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
              int widthRhs) {
-        const uint tRow = threadIdx.x / BLOCKSIZE;
-        const uint tCol = threadIdx.x % BLOCKSIZE;
-        const uint row = blockIdx.y * BLOCKSIZE + tRow;
-        const uint col = blockIdx.x * BLOCKSIZE + tCol;
-        __shared__ float A_tile[BLOCKSIZE][BLOCKSIZE];
-        __shared__ float B_tile[BLOCKSIZE][BLOCKSIZE];
+        const uint tRow = threadIdx.x / BLOCK_DIM;
+        const uint tCol = threadIdx.x % BLOCK_DIM;
+        const uint row = blockIdx.y * BLOCK_DIM + tRow;
+        const uint col = blockIdx.x * BLOCK_DIM + tCol;
+        __shared__ float A_tile[BLOCK_DIM][BLOCK_DIM];
+        __shared__ float B_tile[BLOCK_DIM][BLOCK_DIM];
         float acc = 0;
-        const int tiles = (BLOCKSIZE + widthLhs - 1) / BLOCKSIZE;
+        const int tiles = (BLOCK_DIM + widthLhs - 1) / BLOCK_DIM;
         for (int tile = 0; tile < tiles; tile++){
             A_tile[tRow][tCol] = 0;
             B_tile[tRow][tCol] = 0;
-            const uint col_j = (tile * BLOCKSIZE) + tCol;
-            const uint row_j = (tile * BLOCKSIZE) + tRow;
+            const uint col_j = (tile * BLOCK_DIM) + tCol;
+            const uint row_j = (tile * BLOCK_DIM) + tRow;
             if (col_j < widthLhs && row < heightLhs)
                 A_tile[tRow][tCol] = lhsData[row * widthLhs + col_j];
             if(row_j < widthLhs && col < widthRhs)
                 B_tile[tRow][tCol] = rhsData[row_j * widthRhs + col];
             __syncthreads();
 //            printf("%i\n", threadIdx.x);
-            for (int i = 0; i < BLOCKSIZE; i++){
+            for (int i = 0; i < BLOCK_DIM; i++){
                 acc += A_tile[tRow][i] * B_tile[i][tCol];
             }
             __syncthreads();
@@ -235,11 +346,6 @@ namespace GPU {
     __global__ void
     multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
              int widthRhs) {
-        const int BM = 64;
-        const int BN = 64;
-        const int BK = 8;
-        const int TM = 8;
-
         const uint tRow = threadIdx.x / BN;
         const uint tCol = threadIdx.x % BN;
         __shared__ float A_tile[BM * BK];
@@ -283,14 +389,10 @@ namespace GPU {
     }
 #endif
 #ifdef CUDA_SHARED2D_MULT
+
     __global__ void
     multiply(float* result, const float* lhsData, const float* rhsData, int heightLhs, int widthLhs,
              int widthRhs) {
-        const int BM = 64;
-        const int BN = 64;
-        const int BK = 8;
-        const int TM = 8;
-        const int TN = 8;
 
         const uint totalResultsBlocktile = BM * BN;
         const uint numThreadsBlocktile = totalResultsBlocktile / (TM * TN);
@@ -317,28 +419,18 @@ namespace GPU {
             // populate the SMEM caches
             for (uint loadOffset = 0; loadOffset < BM; loadOffset += strideA) {
                 A_tile[(innerRowA + loadOffset) * BK + innerColA] = 0;
-                if(innerRowA + loadOffset + blockIdx.y * BM < heightLhs && bkIdx + innerColA < widthLhs)
+                if (innerRowA + loadOffset + blockIdx.y * BM < heightLhs && bkIdx + innerColA < widthLhs)
                     A_tile[(innerRowA + loadOffset) * BK + innerColA] =
                             lhsData[(innerRowA + loadOffset + blockIdx.y * BM) * widthLhs + bkIdx + innerColA];
             }
             for (uint loadOffset = 0; loadOffset < BK; loadOffset += strideB) {
                 B_tile[(innerRowB + loadOffset) * BN + innerColB] = 0;
-                if(bkIdx + innerRowB + loadOffset < widthLhs && innerColB + blockIdx.x * BN < widthRhs)
+                if (bkIdx + innerRowB + loadOffset < widthLhs && innerColB + blockIdx.x * BN < widthRhs)
                     B_tile[(innerRowB + loadOffset) * BN + innerColB] =
                             rhsData[(bkIdx + innerRowB + loadOffset) * widthRhs + innerColB + blockIdx.x * BN];
             }
 
-//            lhsData += BK;     // move BK columns to right
-//            rhsData += BK * widthRhs; // move BK rows down
-
-//            A_tile[innerRowA * BK + innerColA] = 0;
-//            B_tile[innerRowB * BN + innerColB] = 0;
-//            if((blockIdx.y * BM + innerRowA) < heightLhs && bkIdx + innerColA < widthLhs)
-//                A_tile[innerRowA * BK + innerColA] = lhsData[(blockIdx.y * BM + innerRowA) * widthLhs + bkIdx + innerColA];
-//            if(bkIdx + innerRowB < widthLhs && innerColB + blockIdx.x * BN < widthRhs)
-//                B_tile[innerRowB * BN + innerColB] = rhsData[(bkIdx + innerRowB) * widthRhs + innerColB + blockIdx.x * BN];
             __syncthreads();
-
 
             // calculate per-thread results
             for (uint dotIdx = 0; dotIdx < BK; ++dotIdx) {
@@ -361,16 +453,13 @@ namespace GPU {
 
         for (uint resIdxM = 0; resIdxM < TM; ++resIdxM) {
             for (uint resIdxN = 0; resIdxN < TN; ++resIdxN) {
-                if(tRow * TM + resIdxM + blockIdx.y * BM < heightLhs && tCol * TN + blockIdx.x * BN + resIdxN < widthRhs)
-                    result[(tRow * TM + resIdxM + blockIdx.y * BM) * widthRhs + tCol * TN + blockIdx.x * BN + resIdxN] = threadResults[resIdxM * TN + resIdxN];
+                if (tRow * TM + resIdxM + blockIdx.y * BM < heightLhs &&
+                    tCol * TN + blockIdx.x * BN + resIdxN < widthRhs)
+                    result[(tRow * TM + resIdxM + blockIdx.y * BM) * widthRhs + tCol * TN + blockIdx.x * BN +
+                           resIdxN] = threadResults[resIdxM * TN + resIdxN];
             }
         }
 
-
-//        for (uint resIdx = 0; resIdx < TM; ++resIdx) {
-//            if ((tRow * TM + resIdx + blockIdx.y * BM) < heightLhs && tCol + blockIdx.x * BN< widthRhs)
-//                result[(tRow * TM + resIdx + blockIdx.y * BM) * widthRhs + tCol + blockIdx.x * BN] = threadResults[resIdx];
-//        }
     }
 #endif
 }

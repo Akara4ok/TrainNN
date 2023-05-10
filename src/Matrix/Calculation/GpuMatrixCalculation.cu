@@ -140,9 +140,17 @@ Matrix GpuMatrixCalculation::transpose(const Matrix& matrix) {
 
     CudaHelper::allocateGpuMemory(&gpuData, matrix.getHeight() * matrix.getWidth());
     int threadsNumX, blocksNumX, threadsNumY, blocksNumY;
+#ifdef CUDA_STANDARD_TRANSPOSE
     CudaHelper::calculateBlockThreadNum(threadsNumX, threadsNumY,
                                         blocksNumX, blocksNumY,
                                         matrix.getHeight(), matrix.getWidth());
+#endif
+#if defined(CUDA_SHARED_TRANSPOSE) || defined(CUDA_NO_BANK_TRANSPOSE)
+    threadsNumX = CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
+    threadsNumY = 8;
+    blocksNumX = (matrix.getWidth() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
+    blocksNumY = (matrix.getHeight() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
+#endif
     const dim3 threads(threadsNumX, threadsNumY, 1);
     const dim3 blocks(blocksNumX, blocksNumY, 1);
     GPU::transpose<<<blocks, threads>>>(gpuData,
