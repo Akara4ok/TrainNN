@@ -43,11 +43,7 @@ Matrix::Matrix(float* new_data, int height, int width, Provider initProvider)
     isUseGpu = initProvider == Provider::GPU;
     if (!isUseGpu) {
         data = new float[height * width];
-        for (int i = 0; i < height; ++i) {
-            for (int j = 0; j < width; ++j) {
-                get(i, j) = (new_data + i * width)[j];
-            }
-        }
+        std::copy(new_data, new_data + height * width, data);
     } else {
         gpuData = new_data;
     }
@@ -60,11 +56,7 @@ Matrix::Matrix(const Matrix& other) {
     isUseGpu = other.isUseGpu;
     if (isUseCpu) {
         data = new float[height * width];
-        for (int i = 0; i < height; ++i) {
-            for (int j = 0; j < width; ++j) {
-                (data + i * width)[j] = other[i][j];
-            }
-        }
+        std::copy(other.getData(), other.getData() + height * width, data);
     }
     if (isUseGpu) {
         CudaHelper::allocateGpuMemory(&gpuData, height * width);
@@ -99,7 +91,6 @@ Matrix& Matrix::operator=(Matrix&& other) noexcept {
 
 Matrix::~Matrix() {
     if (isUseCpu) {
-//        std::cout << "delete\n";
         delete[] data;
     }
     if (isUseGpu) {
@@ -142,6 +133,13 @@ void Matrix::copyCpuToGpu() {
     }
     CudaHelper::allocateGpuMemory(&gpuData, height * width);
     CudaHelper::copyFromCpuToGpu(data, gpuData, height * width);
+}
+
+Matrix Matrix::copyCpuToGpu(const Matrix& other) {
+    float* gpuData;
+    CudaHelper::allocateGpuMemory(&gpuData, other.getHeight() * other.getWidth());
+    CudaHelper::copyFromCpuToGpu(other.getData(), gpuData, other.getHeight() * other.getWidth());
+    return {gpuData, other.getHeight(), other.getWidth(), Provider::GPU};
 }
 
 void Matrix::moveCpuToGpu() {

@@ -59,11 +59,14 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
     Monitoring monitoring(train_x[0]->getWidth(), static_cast<int>(train_x.size()), numberOfParameters, verb);
     for (int e = 0; e < epochs; ++e) {
         for (int t = 0; t < train_x.size(); ++t) {
-            Matrix current(*train_x[t]);
-            Matrix current_y(*train_y[t]);
+            Matrix current;
+            Matrix current_y;
             if (Config::getInstance().getProvider() == Provider::GPU) {
-                current.copyCpuToGpu();
-                current_y.copyCpuToGpu();
+                current = Matrix::copyCpuToGpu(*train_x[t]);
+                current_y = Matrix::copyCpuToGpu(*train_y[t]);
+            } else {
+                current = Matrix(*train_x[t]);
+                current_y = Matrix(*train_y[t]);
             }
 
             for (const auto& layer: layers) {
@@ -83,13 +86,13 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
         float val_accuracy = 0;
         int datasetSize = 0;
         for (int t = 0; t < val_x.size(); ++t) {
-            Matrix current_val_x(*val_x[t]);
-            Matrix current_val_y(*val_y[t]);
+            Matrix current_val_y;
             if (Config::getInstance().getProvider() == Provider::GPU) {
-                current_val_x.copyCpuToGpu();
-                current_val_y.copyCpuToGpu();
+                current_val_y = Matrix::copyCpuToGpu(*val_y[t]);
+            } else {
+                current_val_y = Matrix(*val_y[t]);
             }
-            Matrix val_predict = predict(current_val_x);
+            Matrix val_predict = predict(*val_x[t]);
             datasetSize += val_x[t]->getWidth();
             val_loss += costFunction->calculate(val_predict, current_val_y) * static_cast<float>(val_x[t]->getWidth());
             val_accuracy += Accuracy::calculate(val_predict, current_val_y) * static_cast<float>(val_x[t]->getWidth());
@@ -105,9 +108,11 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
 }
 
 Matrix Model::predict(const Matrix& input) {
-    Matrix current(input);
+    Matrix current;
     if (Config::getInstance().getProvider() == Provider::GPU) {
-        current.copyCpuToGpu();
+        current = Matrix::copyCpuToGpu(input);
+    } else {
+        current = Matrix(input);
     }
     for (const auto& layer: layers) {
         current = layer->forward(current);

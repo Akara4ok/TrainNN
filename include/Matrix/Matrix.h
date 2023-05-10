@@ -71,6 +71,8 @@ public:
 
     void copyCpuToGpu();
 
+    static Matrix copyCpuToGpu(const Matrix& other);
+
     void moveCpuToGpu();
 
     void moveGpuToCpu();
