@@ -2,9 +2,10 @@
 // Created by vlad on 4/24/23.
 //
 
+#include "Model/Model.h"
+
 #include <algorithm>
 #include <iostream>
-#include "Model/Model.h"
 #include "Model/Layer/Linear.h"
 #include "Model/CostFunction/BinaryCrossEntropy.h"
 #include "Model/CostFunction/CrossEntropy.h"
@@ -38,9 +39,9 @@ int Model::getNumberOfParams() const {
     return numberOfParameters;
 }
 
-void Model::compile(float learningRate_, Cost costType_) {
-    learningRate = learningRate_;
-    switch (costType_) {
+void Model::compile(float lr, Cost cost) {
+    learningRate = lr;
+    switch (cost) {
         case Cost::BinaryCrossEntropy:
             costType = Cost::BinaryCrossEntropy;
             costFunction = std::make_unique<BinaryCrossEntropy>();
@@ -57,14 +58,26 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
              const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y,
              const std::string& logFolder) {
     Monitoring monitoring(train_x[0]->getWidth(), static_cast<int>(train_x.size()), numberOfParameters, verb);
+
+    //reserve some batches only if we have 1 batch
+    std::map<std::string, Matrix> reservedBatches;
+    bool useReservedTrain = Config::getInstance().getProvider() == Provider::GPU && train_x.size() == 1;
+    bool useReservedVal = Config::getInstance().getProvider() == Provider::GPU && train_x.size() == 1;
+    if (useReservedTrain) {
+        reservedBatches["train_x"] = Matrix::copy(*train_x[0], Provider::CPU, Provider::GPU);
+        reservedBatches["train_y"] = Matrix::copy(*train_y[0], Provider::CPU, Provider::GPU);
+    }
+    if (useReservedVal) {
+        reservedBatches["val_x"] = Matrix::copy(*val_x[0], Provider::CPU, Provider::GPU);
+        reservedBatches["val_y"] = Matrix::copy(*val_y[0], Provider::CPU, Provider::GPU);
+    }
+
     for (int e = 0; e < epochs; ++e) {
         for (int t = 0; t < train_x.size(); ++t) {
-            Matrix current(*train_x[t]);
-            Matrix current_y(*train_y[t]);
-            if (Config::getInstance().getProvider() == Provider::GPU) {
-                current.copyCpuToGpu();
-                current_y.copyCpuToGpu();
-            }
+            Matrix current = useReservedTrain ? Matrix(reservedBatches["train_x"]) :
+                             Matrix::copy(*train_x[t], Provider::CPU, Config::getInstance().getProvider());
+            Matrix current_y = useReservedTrain ? Matrix(reservedBatches["train_y"]) :
+                               Matrix::copy(*train_y[t], Provider::CPU, Config::getInstance().getProvider());
 
             for (const auto& layer: layers) {
                 current = layer->forwardWithCache(current);
@@ -83,12 +96,11 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
         float val_accuracy = 0;
         int datasetSize = 0;
         for (int t = 0; t < val_x.size(); ++t) {
-            Matrix current_val_x(*val_x[t]);
-            Matrix current_val_y(*val_y[t]);
-            if (Config::getInstance().getProvider() == Provider::GPU) {
-                current_val_x.copyCpuToGpu();
-                current_val_y.copyCpuToGpu();
-            }
+            Matrix current_val_x = useReservedTrain ? Matrix(reservedBatches["val_x"]) :
+                                   Matrix::copy(*val_x[t], Provider::CPU, Config::getInstance().getProvider());
+            Matrix current_val_y = useReservedTrain ? Matrix(reservedBatches["val_y"]) :
+                                   Matrix::copy(*val_y[t], Provider::CPU, Config::getInstance().getProvider());
+
             Matrix val_predict = predict(current_val_x);
             datasetSize += val_x[t]->getWidth();
             val_loss += costFunction->calculate(val_predict, current_val_y) * static_cast<float>(val_x[t]->getWidth());
@@ -105,9 +117,11 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
 }
 
 Matrix Model::predict(const Matrix& input) {
-    Matrix current(input);
-    if (Config::getInstance().getProvider() == Provider::GPU) {
-        current.copyCpuToGpu();
+    Matrix current;
+    if (Config::getInstance().getProvider() == Provider::GPU && !input.getIsUseGpu()) {
+        current = Matrix::copy(input, Provider::CPU, Provider::GPU);
+    } else {
+        current = Matrix(input);
     }
     for (const auto& layer: layers) {
         current = layer->forward(current);

@@ -5,10 +5,10 @@
 #ifndef CMAKE_AND_CUDA_MATRIX_H
 #define CMAKE_AND_CUDA_MATRIX_H
 
-#include "config.hpp"
 #include <map>
 #include <memory>
 #include <vector>
+#include "config.hpp"
 
 class IMatrixCalculation;
 
@@ -17,7 +17,9 @@ class Matrix {
     float* gpuData = nullptr;
     int height = 0;
     int width = 0;
-    static std::map<Provider, std::unique_ptr<IMatrixCalculation>> calculation;
+    static Provider lastProvider;
+    static std::map<Provider, std::shared_ptr<IMatrixCalculation>> calculation;
+    static std::shared_ptr<IMatrixCalculation> currentAlgo;
     bool isUseCpu = false;
     bool isUseGpu = false;
 public:
@@ -29,7 +31,7 @@ public:
 
     Matrix(int height, int width, Provider initProvider = Provider::CPU);
 
-    Matrix(float* data, int height, int width, Provider initProvider = Provider::CPU);
+    Matrix(float* newData, int height, int width, Provider initProvider = Provider::CPU);
 
     Matrix(const Matrix& other);
 
@@ -39,29 +41,45 @@ public:
 
     ~Matrix();
 
-    float& get(int rowIndex, int colIndex);
+    [[nodiscard]] float& get(int rowIndex, int colIndex) const {
+        return (data + rowIndex * width)[colIndex];
+    };
 
-    [[nodiscard]] float get(int rowIndex, int colIndex) const;
+    [[nodiscard]] int getWidth() const {
+        return width;
+    };
 
-    [[nodiscard]] int getWidth() const;
+    [[nodiscard]] int getHeight() const {
+        return height;
+    };
 
-    [[nodiscard]] int getHeight() const;
+    [[nodiscard]] float* getData() const {
+        return data;
+    };
 
-    [[nodiscard]] float* getData() const;
+    [[nodiscard]] float* getGpuData() const {
+        return gpuData;
+    };
 
-    [[nodiscard]] float* getGpuData() const;
+    [[nodiscard]] bool getIsUseCpu() const {
+        return isUseCpu;
+    }
 
-    float* getGpuData();
+    [[nodiscard]] bool getIsUseGpu() const {
+        return isUseGpu;
+    }
 
-    void setNewDataWithSize(float* new_data, int new_height, int new_width);
+    void setNewDataWithSize(float* newData, int newHeight, int newWidth);
 
-    void setNewGpuDataWithSize(float* new_data, int new_height, int new_width);
+    void setNewGpuDataWithSize(float* newData, int newHeight, int newWidth);
 
-    void setGpuData(float* new_data);
+    void setGpuData(float* newData);
 
     void copyGpuToCpu();
 
     void copyCpuToGpu();
+
+    static Matrix copy(const Matrix& other, Provider from, Provider to);
 
     void moveCpuToGpu();
 
@@ -116,9 +134,13 @@ public:
 
     Matrix operator/(float value) const;
 
-    float* operator[](int index);
+    float* operator[](int index) {
+        return data + index * width;
+    }
 
-    float* operator[](int index) const;
+    float* operator[](int index) const {
+        return data + index * width;
+    }
 
     void reciprocal();
 

@@ -2,10 +2,11 @@
 // Created by vlad on 4/23/23.
 //
 
+#include "Matrix/Calculation/CpuMatrixCalculation.h"
+
 #include <cmath>
 #include <random>
 #include "Matrix/Matrix.h"
-#include "Matrix/Calculation/CpuMatrixCalculation.h"
 
 Matrix CpuMatrixCalculation::sum(const Matrix& matrix, int axis) {
     if (axis == -1) {
@@ -68,7 +69,7 @@ Matrix CpuMatrixCalculation::exp(const Matrix& matrix) {
     return result;
 }
 
-void CpuMatrixCalculation::exp_inline(Matrix& matrix) {
+void CpuMatrixCalculation::expInline(Matrix& matrix) {
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
             matrix[i][j] = expf(matrix[i][j]);
@@ -86,7 +87,7 @@ Matrix CpuMatrixCalculation::log(const Matrix& matrix) {
     return result;
 }
 
-void CpuMatrixCalculation::log_inline(Matrix& matrix) {
+void CpuMatrixCalculation::logInline(Matrix& matrix) {
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
             matrix[i][j] = logf(matrix[i][j]);
@@ -104,14 +105,14 @@ Matrix CpuMatrixCalculation::transpose(const Matrix& matrix) {
     return result;
 }
 
-void CpuMatrixCalculation::transpose_inline(Matrix& matrix) {
-    auto* new_data = new float[matrix.getHeight() * matrix.getWidth()];
+void CpuMatrixCalculation::transposeInline(Matrix& matrix) {
+    auto* newData = new float[matrix.getHeight() * matrix.getWidth()];
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
-            (new_data + j * matrix.getHeight())[i] = matrix[i][j];
+            (newData + j * matrix.getHeight())[i] = matrix[i][j];
         }
     }
-    matrix.setNewDataWithSize(new_data, matrix.getWidth(), matrix.getHeight());
+    matrix.setNewDataWithSize(newData, matrix.getWidth(), matrix.getHeight());
 }
 
 Matrix CpuMatrixCalculation::elementWiseMultiply(const Matrix& lhs, const Matrix& rhs) {
@@ -149,11 +150,9 @@ CpuMatrixCalculation::clip(const Matrix& matrix, float minBound, float maxBound,
 
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
-            result[i][j] = matrix[i][j];
             if (result[i][j] < minBound) {
                 result[i][j] = minValueToSet;
-            }
-            if (result[i][j] > maxBound) {
+            } else if (result[i][j] > maxBound) {
                 result[i][j] = maxValueToSet;
             }
         }
@@ -161,14 +160,13 @@ CpuMatrixCalculation::clip(const Matrix& matrix, float minBound, float maxBound,
     return result;
 }
 
-void CpuMatrixCalculation::clip_inline(Matrix& matrix, float minBound, float maxBound, float minValueToSet,
-                                       float maxValueToSet) {
+void CpuMatrixCalculation::clipInline(Matrix& matrix, float minBound, float maxBound, float minValueToSet,
+                                      float maxValueToSet) {
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
             if (matrix[i][j] < minBound) {
                 matrix[i][j] = minValueToSet;
-            }
-            if (matrix[i][j] >= maxBound) {
+            } else if (matrix[i][j] >= maxBound) {
                 matrix[i][j] = maxValueToSet;
             }
         }
@@ -217,7 +215,7 @@ Matrix CpuMatrixCalculation::reciprocal(const Matrix& matrix) {
     return result;
 }
 
-void CpuMatrixCalculation::reciprocal_inline(Matrix& matrix) {
+void CpuMatrixCalculation::reciprocalInline(Matrix& matrix) {
     for (int i = 0; i < matrix.getHeight(); ++i) {
         for (int j = 0; j < matrix.getWidth(); ++j) {
             matrix[i][j] = 1 / matrix[i][j];

@@ -2,7 +2,6 @@
 // Created by vlad on 4/25/23.
 //
 
-
 #include "Model/Activation/ActivationTypes.h"
 
 std::ostream& operator<<(std::ostream& os, const Activation& other) {

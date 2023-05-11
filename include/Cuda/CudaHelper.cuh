@@ -6,13 +6,15 @@
 #define TRAINNN_CUDAHELPER_CUH
 
 class CudaHelper {
-    static const int THREADS_PER_BLOCK = 1024;
-    static const int THREAD_PER_TWO_DIM_BLOCK = 32;
 public:
-    static void calculateLinearThreadNum(int& threads_x, int& blocks_x, int size);
+    static const int THREADS_PER_BLOCK = 1024;
 
-    static void calculateBlockThreadNum(int& threads_x, int& threads_y,
-                                        int& blocks_x, int& blocks_y,
+    static const int THREAD_PER_TWO_DIM_BLOCK = 32;
+
+    static void calculateLinearThreadNum(int& threadsX, int& blocksX, int size);
+
+    static void calculateBlockThreadNum(int& threadsX, int& threadsY,
+                                        int& blocksX, int& blocksY,
                                         int height, int width);
 
     static void allocateGpuMemory(float** data, int size);

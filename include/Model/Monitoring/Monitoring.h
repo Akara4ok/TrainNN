@@ -5,10 +5,10 @@
 #ifndef TRAINNN_MONITORING_H
 #define TRAINNN_MONITORING_H
 
-#include "LogSample.h"
 #include <vector>
 #include <string>
 #include <chrono>
+#include "LogSample.h"
 
 enum class Verbose {
     None,

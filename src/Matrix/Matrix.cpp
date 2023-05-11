@@ -2,23 +2,27 @@
 // Created by vlad on 4/23/23.
 //
 
+#include "Matrix/Matrix.h"
+
 #include <iostream>
 #include "Cuda/CudaHelper.cuh"
-#include "Matrix/Matrix.h"
 #include "Matrix/Calculation/CpuMatrixCalculation.h"
 #include "Matrix/Calculation/GpuMatrixCalculation.cuh"
 
-std::map<Provider, IMatrixCalculation::Ptr> Matrix::calculation;
+std::map<Provider, std::shared_ptr<IMatrixCalculation>> Matrix::calculation;
 
 void Matrix::initCalculation() {
-    calculation.emplace(Provider::CPU, std::make_unique<CpuMatrixCalculation>());
-    calculation.emplace(Provider::GPU, std::make_unique<GpuMatrixCalculation>());
+    calculation.emplace(Provider::CPU, std::make_shared<CpuMatrixCalculation>());
+    calculation.emplace(Provider::GPU, std::make_shared<GpuMatrixCalculation>());
 }
 
 static int initCalculationCaller = []() {
     Matrix::initCalculation();
     return 0;
 }();
+
+Provider Matrix::lastProvider = Provider::None;
+std::shared_ptr<IMatrixCalculation> Matrix::currentAlgo;
 
 Matrix::Matrix(int height, int width, Provider initProvider)
         : height(height), width(width) {
@@ -27,21 +31,22 @@ Matrix::Matrix(int height, int width, Provider initProvider)
     if (isUseCpu) {
         data = new float[height * width];
     }
+
+    if (lastProvider != Config::getInstance().getProvider()) {
+        lastProvider = Config::getInstance().getProvider();
+        currentAlgo = calculation[Config::getInstance().getProvider()];
+    }
 }
 
-Matrix::Matrix(float* new_data, int height, int width, Provider initProvider)
+Matrix::Matrix(float* newData, int height, int width, Provider initProvider)
         : height(height), width(width) {
     isUseCpu = initProvider == Provider::CPU;
     isUseGpu = initProvider == Provider::GPU;
     if (!isUseGpu) {
         data = new float[height * width];
-        for (int i = 0; i < height; ++i) {
-            for (int j = 0; j < width; ++j) {
-                get(i, j) = (new_data + i * width)[j];
-            }
-        }
+        std::copy(newData, newData + height * width, data);
     } else {
-        gpuData = new_data;
+        gpuData = newData;
     }
 }
 
@@ -52,11 +57,7 @@ Matrix::Matrix(const Matrix& other) {
     isUseGpu = other.isUseGpu;
     if (isUseCpu) {
         data = new float[height * width];
-        for (int i = 0; i < height; ++i) {
-            for (int j = 0; j < width; ++j) {
-                (data + i * width)[j] = other[i][j];
-            }
-        }
+        std::copy(other.getData(), other.getData() + height * width, data);
     }
     if (isUseGpu) {
         CudaHelper::allocateGpuMemory(&gpuData, height * width);
@@ -91,7 +92,6 @@ Matrix& Matrix::operator=(Matrix&& other) noexcept {
 
 Matrix::~Matrix() {
     if (isUseCpu) {
-//        std::cout << "delete\n";
         delete[] data;
     }
     if (isUseGpu) {
@@ -99,52 +99,24 @@ Matrix::~Matrix() {
     }
 }
 
-float& Matrix::get(int rowIndex, int colIndex) {
-    return (data + rowIndex * width)[colIndex];
-}
-
-float Matrix::get(int rowIndex, int colIndex) const {
-    return (data + rowIndex * width)[colIndex];
-}
-
-int Matrix::getWidth() const {
-    return width;
-}
-
-int Matrix::getHeight() const {
-    return height;
-}
-
-float* Matrix::getData() const {
-    return data;
-}
-
-float* Matrix::getGpuData() const {
-    return gpuData;
-}
-
-float* Matrix::getGpuData() {
-    return gpuData;
-}
-
-void Matrix::setNewDataWithSize(float* new_data, int new_height, int new_width) {
+void Matrix::setNewDataWithSize(float* newData, int newHeight, int newWidth) {
     delete[] data;
-    data = new_data;
-    height = new_height;
-    width = new_width;
+    data = newData;
+    height = newHeight;
+    width = newWidth;
 }
 
-void Matrix::setNewGpuDataWithSize(float* new_data, int new_height, int new_width) {
-    setGpuData(new_data);
-    height = new_height;
-    width = new_width;
+void Matrix::setNewGpuDataWithSize(float* newData, int newHeight, int newWidth) {
+    setGpuData(newData);
+    height = newHeight;
+    width = newWidth;
 }
 
-void Matrix::setGpuData(float* new_data) {
+void Matrix::setGpuData(float* newData) {
     if (gpuData != nullptr) {
         CudaHelper::deleteGpuMemory(gpuData);
     }
-    gpuData = new_data;
+    gpuData = newData;
 }
 
 void Matrix::copyGpuToCpu() {
@@ -162,6 +134,22 @@ void Matrix::copyCpuToGpu() {
     }
     CudaHelper::allocateGpuMemory(&gpuData, height * width);
     CudaHelper::copyFromCpuToGpu(data, gpuData, height * width);
+}
+
+Matrix Matrix::copy(const Matrix& other, Provider from, Provider to) {
+    if (from == to)
+        return {other};
+
+    if (to == Provider::GPU) {
+        float* gpuData;
+        CudaHelper::allocateGpuMemory(&gpuData, other.getHeight() * other.getWidth());
+        CudaHelper::copyFromCpuToGpu(other.getData(), gpuData, other.getHeight() * other.getWidth());
+        return {gpuData, other.getHeight(), other.getWidth(), Provider::GPU};
+    } else {
+        auto* data = new float[other.getHeight() * other.getWidth()];
+        CudaHelper::copyFromGpuToCpu(other.getGpuData(), data, other.getHeight() * other.getWidth());
+        return {data, other.getHeight(), other.getWidth(), Provider::GPU};
+    }
 }
 
 void Matrix::moveCpuToGpu() {
@@ -187,7 +175,7 @@ void Matrix::moveGpuToCpu() {
 }
 
 void Matrix::randomInit(int w) {
-    calculation[Config::getInstance().getProvider()]->randomInit(*this, w);
+    currentAlgo->randomInit(*this, w);
 }
 
 void Matrix::zeroInit() {
@@ -219,7 +207,7 @@ std::ostream& operator<<(std::ostream& os, const Matrix& matrix) {
 }
 
 float Matrix::sum() const {
-    Matrix result = calculation[Config::getInstance().getProvider()]->sum(*this, -1);
+    Matrix result = currentAlgo->sum(*this, -1);
     if (Config::getInstance().getProvider() == Provider::GPU) {
         result.copyGpuToCpu();
     }
@@ -227,51 +215,51 @@ float Matrix::sum() const {
 }
 
 Matrix Matrix::sum(const Matrix& matrix, int axis) {
-    return calculation[Config::getInstance().getProvider()]->sum(matrix, axis);
+    return currentAlgo->sum(matrix, axis);
 }
 
 Matrix Matrix::multiply(const Matrix& lhs, const Matrix& rhs) {
-    return calculation[Config::getInstance().getProvider()]->multiply(lhs, rhs);
+    return currentAlgo->multiply(lhs, rhs);
 }
 
 void Matrix::exp() {
-    calculation[Config::getInstance().getProvider()]->exp_inline(*this);
+    currentAlgo->expInline(*this);
 }
 
 Matrix Matrix::exp(const Matrix& matrix) {
-    return calculation[Config::getInstance().getProvider()]->exp(matrix);
+    return currentAlgo->exp(matrix);
 }
 
 void Matrix::log() {
-    calculation[Config::getInstance().getProvider()]->log_inline(*this);
+    currentAlgo->logInline(*this);
 }
 
 Matrix Matrix::log(const Matrix& matrix) {
-    return calculation[Config::getInstance().getProvider()]->log(matrix);
+    return currentAlgo->log(matrix);
 }
 
 void Matrix::transpose() {
-    calculation[Config::getInstance().getProvider()]->transpose_inline(*this);
+    currentAlgo->transposeInline(*this);
 }
 
 Matrix Matrix::transpose(const Matrix& matrix) {
-    return calculation[Config::getInstance().getProvider()]->transpose(matrix);
+    return currentAlgo->transpose(matrix);
 }
 
 void Matrix::clip(float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
-    calculation[Config::getInstance().getProvider()]->clip_inline(*this,
-                                                                  minBound, maxBound,
-                                                                  minValueToSet, maxValueToSet);
+    currentAlgo->clipInline(*this,
+                            minBound, maxBound,
+                            minValueToSet, maxValueToSet);
 }
 
 Matrix Matrix::clip(const Matrix& matrix, float minBound, float maxBound, float minValueToSet, float maxValueToSet) {
-    return calculation[Config::getInstance().getProvider()]->clip(matrix,
-                                                                  minBound, maxBound,
-                                                                  minValueToSet, maxValueToSet);
+    return currentAlgo->clip(matrix,
+                             minBound, maxBound,
+                             minValueToSet, maxValueToSet);
 }
 
 Matrix Matrix::operator+(const Matrix& rhs) const {
-    return calculation[Config::getInstance().getProvider()]->sum(*this, rhs);
+    return currentAlgo->sum(*this, rhs);
 }
 
 Matrix Matrix::operator+(float value) const {
@@ -280,7 +268,7 @@ Matrix Matrix::operator+(float value) const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->sum(*this, matrix);
+    return currentAlgo->sum(*this, matrix);
 }
 
 Matrix Matrix::operator-() const {
@@ -289,11 +277,11 @@ Matrix Matrix::operator-() const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
+    return currentAlgo->elementWiseMultiply(*this, matrix);
 }
 
 Matrix Matrix::operator-(const Matrix& rhs) const {
-    return calculation[Config::getInstance().getProvider()]->subtract(*this, rhs);
+    return currentAlgo->subtract(*this, rhs);
 }
 
 Matrix Matrix::operator-(float value) const {
@@ -302,11 +290,11 @@ Matrix Matrix::operator-(float value) const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->subtract(*this, matrix);
+    return currentAlgo->subtract(*this, matrix);
 }
 
 Matrix Matrix::operator*(const Matrix& rhs) const {
-    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, rhs);
+    return currentAlgo->elementWiseMultiply(*this, rhs);
 }
 
 Matrix Matrix::operator*(float value) const {
@@ -315,11 +303,11 @@ Matrix Matrix::operator*(float value) const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->elementWiseMultiply(*this, matrix);
+    return currentAlgo->elementWiseMultiply(*this, matrix);
 }
 
 Matrix Matrix::operator/(const Matrix& rhs) const {
-    return calculation[Config::getInstance().getProvider()]->elementWiseDivide(*this, rhs);
+    return currentAlgo->elementWiseDivide(*this, rhs);
 }
 
 Matrix Matrix::operator/(float value) const {
@@ -328,23 +316,15 @@ Matrix Matrix::operator/(float value) const {
     if (Config::getInstance().getProvider() == Provider::GPU) {
         matrix.moveCpuToGpu();
     }
-    return calculation[Config::getInstance().getProvider()]->elementWiseDivide(*this, matrix);
-}
-
-float* Matrix::operator[](int index) {
-    return data + index * width;
-}
-
-float* Matrix::operator[](int index) const {
-    return data + index * width;
+    return currentAlgo->elementWiseDivide(*this, matrix);
 }
 
 void Matrix::reciprocal() {
-    calculation[Config::getInstance().getProvider()]->reciprocal_inline(*this);
+    currentAlgo->reciprocalInline(*this);
 }
 
 Matrix Matrix::reciprocal(const Matrix& matrix) {
-    return calculation[Config::getInstance().getProvider()]->reciprocal(matrix);
+    return currentAlgo->reciprocal(matrix);
 }
 
 Matrix::Ptr Matrix::merge(std::vector<Matrix::Ptr>::iterator begin,
@@ -370,5 +350,5 @@ Matrix::Ptr Matrix::merge(std::vector<Matrix::Ptr>::iterator begin,
 }
 
 Matrix Matrix::argmax(const Matrix& matrix, int axis) {
-    return calculation[Config::getInstance().getProvider()]->argmax(matrix, axis);
+    return currentAlgo->argmax(matrix, axis);
 }

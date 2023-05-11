@@ -2,13 +2,14 @@
 // Created by vlad on 4/25/23.
 //
 
+#include "Dataset/ImageFlattenDataset.h"
+
 #include <filesystem>
 #include <iostream>
 #include <set>
 #include <algorithm>
 #include <random>
 #include <opencv2/opencv.hpp>
-#include "Dataset/ImageFlattenDataset.h"
 
 ImageFlattenDataset::ImageFlattenDataset(const std::string& folderPath,
                                          int imageHeight, int imageWidth, int batchSize, int seed)

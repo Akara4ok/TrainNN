@@ -11,7 +11,7 @@
 
 struct LogSample {
     int epoch;
-    int batch_no;
+    int batchNo;
     float loss;
     float val_loss;
     float val_acc;
@@ -21,7 +21,7 @@ struct LogSample {
               float loss = std::numeric_limits<float>::lowest(),
               float val_loss = std::numeric_limits<float>::lowest(),
               float val_acc = std::numeric_limits<float>::lowest())
-            : epoch(epoch), batch_no(batch_no), duration(duration), loss(loss), val_loss(val_loss), val_acc(val_acc) {
+            : epoch(epoch), batchNo(batch_no), duration(duration), loss(loss), val_loss(val_loss), val_acc(val_acc) {
     }
 
     static std::string getSerializableNames();

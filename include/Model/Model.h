@@ -34,7 +34,7 @@ public:
 
     [[nodiscard]] int getNumberOfParams() const;
 
-    void compile(float learningRate_, Cost costType_);
+    void compile(float lr, Cost cost);
 
     void
     train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
