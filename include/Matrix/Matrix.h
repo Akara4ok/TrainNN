@@ -5,10 +5,10 @@
 #ifndef CMAKE_AND_CUDA_MATRIX_H
 #define CMAKE_AND_CUDA_MATRIX_H
 
-#include "config.hpp"
 #include <map>
 #include <memory>
 #include <vector>
+#include "config.hpp"
 
 class IMatrixCalculation;
 
@@ -31,7 +31,7 @@ public:
 
     Matrix(int height, int width, Provider initProvider = Provider::CPU);
 
-    Matrix(float* data, int height, int width, Provider initProvider = Provider::CPU);
+    Matrix(float* newData, int height, int width, Provider initProvider = Provider::CPU);
 
     Matrix(const Matrix& other);
 
@@ -61,17 +61,25 @@ public:
         return gpuData;
     };
 
-    void setNewDataWithSize(float* new_data, int new_height, int new_width);
+    [[nodiscard]] bool getIsUseCpu() const {
+        return isUseCpu;
+    }
 
-    void setNewGpuDataWithSize(float* new_data, int new_height, int new_width);
+    [[nodiscard]] bool getIsUseGpu() const {
+        return isUseGpu;
+    }
 
-    void setGpuData(float* new_data);
+    void setNewDataWithSize(float* newData, int newHeight, int newWidth);
+
+    void setNewGpuDataWithSize(float* newData, int newHeight, int newWidth);
+
+    void setGpuData(float* newData);
 
     void copyGpuToCpu();
 
     void copyCpuToGpu();
 
-    static Matrix copyCpuToGpu(const Matrix& other);
+    static Matrix copy(const Matrix& other, Provider from, Provider to);
 
     void moveCpuToGpu();
 

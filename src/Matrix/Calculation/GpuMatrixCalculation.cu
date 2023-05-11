@@ -41,23 +41,23 @@ Matrix GpuMatrixCalculation::multiply(const Matrix& lhs, const Matrix& rhs) {
                                         blocksNumX, blocksNumY,
                                         lhs.getHeight(), rhs.getWidth());
 #endif
-#if defined(CUDA_COALSCING_MULT) || defined(CUDA_SHAREDBLOCK_MULT)
+#if defined(CUDA_COALESCING_MULT) || defined(CUDA_SHARED_BLOCK_MULT)
     threadsNumX = CudaHelper::THREAD_PER_TWO_DIM_BLOCK * CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
     threadsNumY = 1;
     blocksNumX = (rhs.getWidth() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
     blocksNumY = (lhs.getHeight() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
 #endif
 #if defined(CUDA_SHARED1D_MULT)
-    threadsNumX = 64 * 64 / 8;
+    threadsNumX = GPU::BHL * GPU::BWR / GPU::TWR;
     threadsNumY = 1;
-    blocksNumX = (rhs.getWidth() - 1) / 64 + 1;
-    blocksNumY = (lhs.getHeight() - 1) / 64 + 1;
+    blocksNumX = (rhs.getWidth() - 1) / GPU::BWR + 1;
+    blocksNumY = (lhs.getHeight() - 1) / GPU::BHL + 1;
 #endif
 #if defined(CUDA_SHARED2D_MULT)
-    threadsNumX = 64;
+    threadsNumX = GPU::BHL * GPU::BWR / (GPU::THL * GPU::TWR);
     threadsNumY = 1;
-    blocksNumX = (rhs.getWidth() - 1) / 64 + 1;
-    blocksNumY = (lhs.getHeight() - 1) / 64 + 1;
+    blocksNumX = (rhs.getWidth() - 1) / GPU::BWR + 1;
+    blocksNumY = (lhs.getHeight() - 1) / GPU::BHL + 1;
 #endif
 
     const dim3 threads(threadsNumX, threadsNumY, 1);
@@ -91,7 +91,7 @@ Matrix GpuMatrixCalculation::exp(const Matrix& matrix) {
     return {gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU};
 }
 
-void GpuMatrixCalculation::exp_inline(Matrix& matrix) {
+void GpuMatrixCalculation::expInline(Matrix& matrix) {
     int threadsNumX, blocksNumX, threadsNumY, blocksNumY;
     CudaHelper::calculateBlockThreadNum(threadsNumX, threadsNumY,
                                         blocksNumX, blocksNumY,
@@ -122,7 +122,7 @@ Matrix GpuMatrixCalculation::log(const Matrix& matrix) {
     return {gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU};
 }
 
-void GpuMatrixCalculation::log_inline(Matrix& matrix) {
+void GpuMatrixCalculation::logInline(Matrix& matrix) {
     int threadsNumX, blocksNumX, threadsNumY, blocksNumY;
     CudaHelper::calculateBlockThreadNum(threadsNumX, threadsNumY,
                                         blocksNumX, blocksNumY,
@@ -147,7 +147,7 @@ Matrix GpuMatrixCalculation::transpose(const Matrix& matrix) {
 #endif
 #if defined(CUDA_SHARED_TRANSPOSE) || defined(CUDA_NO_BANK_TRANSPOSE)
     threadsNumX = CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
-    threadsNumY = 8;
+    threadsNumY = GPU::BWL;
     blocksNumX = (matrix.getWidth() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
     blocksNumY = (matrix.getHeight() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
 #endif
@@ -161,14 +161,22 @@ Matrix GpuMatrixCalculation::transpose(const Matrix& matrix) {
     return {gpuData, matrix.getWidth(), matrix.getHeight(), Provider::GPU};
 }
 
-void GpuMatrixCalculation::transpose_inline(Matrix& matrix) {
+void GpuMatrixCalculation::transposeInline(Matrix& matrix) {
     float* gpuData;
 
     CudaHelper::allocateGpuMemory(&gpuData, matrix.getHeight() * matrix.getWidth());
     int threadsNumX, blocksNumX, threadsNumY, blocksNumY;
+#ifdef CUDA_STANDARD_TRANSPOSE
     CudaHelper::calculateBlockThreadNum(threadsNumX, threadsNumY,
                                         blocksNumX, blocksNumY,
                                         matrix.getHeight(), matrix.getWidth());
+#endif
+#if defined(CUDA_SHARED_TRANSPOSE) || defined(CUDA_NO_BANK_TRANSPOSE)
+    threadsNumX = CudaHelper::THREAD_PER_TWO_DIM_BLOCK;
+    threadsNumY = GPU::BWL;
+    blocksNumX = (matrix.getWidth() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
+    blocksNumY = (matrix.getHeight() - 1) / CudaHelper::THREAD_PER_TWO_DIM_BLOCK + 1;
+#endif
     const dim3 threads(threadsNumX, threadsNumY, 1);
     const dim3 blocks(blocksNumX, blocksNumY, 1);
     GPU::transpose<<<blocks, threads>>>(gpuData,
@@ -244,8 +252,8 @@ GpuMatrixCalculation::clip(const Matrix& matrix, float minBound, float maxBound,
     return {gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU};
 }
 
-void GpuMatrixCalculation::clip_inline(Matrix& matrix, float minBound, float maxBound, float minValueToSet,
-                                       float maxValueToSet) {
+void GpuMatrixCalculation::clipInline(Matrix& matrix, float minBound, float maxBound, float minValueToSet,
+                                      float maxValueToSet) {
     int threadsNumX, blocksNumX, threadsNumY, blocksNumY;
     CudaHelper::calculateBlockThreadNum(threadsNumX, threadsNumY,
                                         blocksNumX, blocksNumY,
@@ -320,7 +328,7 @@ Matrix GpuMatrixCalculation::reciprocal(const Matrix& matrix) {
     return {gpuData, matrix.getHeight(), matrix.getWidth(), Provider::GPU};
 }
 
-void GpuMatrixCalculation::reciprocal_inline(Matrix& matrix) {
+void GpuMatrixCalculation::reciprocalInline(Matrix& matrix) {
     int threadsNumX, blocksNumX, threadsNumY, blocksNumY;
     CudaHelper::calculateBlockThreadNum(threadsNumX, threadsNumY,
                                         blocksNumX, blocksNumY,

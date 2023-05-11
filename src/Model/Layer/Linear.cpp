@@ -1,9 +1,10 @@
 //
 // Created by vlad on 4/24/23.
 //
-#include <iostream>
 
 #include "Model/Layer/Linear.h"
+
+#include <iostream>
 #include "Model/Activation/SigmoidActivation.h"
 #include "Model/Activation/ReluActivation.h"
 #include "Model/Activation/SoftmaxActivation.h"

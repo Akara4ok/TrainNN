@@ -18,15 +18,15 @@ public:
 
     Matrix exp(const Matrix& matrix) override;
 
-    void exp_inline(Matrix& matrix) override;
+    void expInline(Matrix& matrix) override;
 
     Matrix log(const Matrix& matrix) override;
 
-    void log_inline(Matrix& matrix) override;
+    void logInline(Matrix& matrix) override;
 
     Matrix transpose(const Matrix& matrix) override;
 
-    void transpose_inline(Matrix& matrix) override;
+    void transposeInline(Matrix& matrix) override;
 
     Matrix elementWiseMultiply(const Matrix& lhs, const Matrix& rhs) override;
 
@@ -37,9 +37,9 @@ public:
          float minBound, float maxBound,
          float minValueToSet, float maxValueToSet) override;
 
-    void clip_inline(Matrix& matrix,
-                     float minBound, float maxBound,
-                     float minValueToSet, float maxValueToSet) override;
+    void clipInline(Matrix& matrix,
+                    float minBound, float maxBound,
+                    float minValueToSet, float maxValueToSet) override;
 
     Matrix sum(const Matrix& lhs, const Matrix& rhs) override;
 
@@ -47,7 +47,7 @@ public:
 
     Matrix reciprocal(const Matrix& matrix) override;
 
-    void reciprocal_inline(Matrix& matrix) override;
+    void reciprocalInline(Matrix& matrix) override;
 
     Matrix argmax(const Matrix& matrix, int axis) override;
 

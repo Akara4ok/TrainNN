@@ -3,6 +3,7 @@
 //
 
 #include "Model/Monitoring/Monitoring.h"
+
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -24,19 +25,19 @@ void Monitoring::add(int epoch, int batch_no, float loss, float val_loss, float 
 void Monitoring::logLastSample() {
     if (logLevel == Verbose::All) {
         LogSample lastLog = history.back();
-        if (lastLog.batch_no == 0) {
+        if (lastLog.batchNo == 0) {
             std::cout << "Epoch: " << lastLog.epoch << ": ";
             if (batchCount > 1) {
                 std::cout << "\n";
             }
         }
-        if (lastLog.batch_no >= 0 && batchCount > 1) {
-            std::cout << "   Batch: " << lastLog.batch_no << ": ";
+        if (lastLog.batchNo >= 0 && batchCount > 1) {
+            std::cout << "   Batch: " << lastLog.batchNo << ": ";
         }
-        if (lastLog.batch_no >= 0) {
+        if (lastLog.batchNo >= 0) {
             std::cout << "loss: " << lastLog.loss << " ";
         }
-        if (lastLog.batch_no == -1) {
+        if (lastLog.batchNo == -1) {
             if (batchCount > 1) {
                 std::cout << "Epoch: " << lastLog.epoch << ": ";
             } else {
@@ -55,23 +56,23 @@ void Monitoring::serialize(const std::string& logDir) {
     if (!std::filesystem::is_directory(logDir)) {
         std::filesystem::create_directories(logDir);
     }
-    std::ofstream history_out(logDir + "/history.csv");
-    history_out << LogSample::getSerializableNames();
+    std::ofstream historyOut(logDir + "/history.csv");
+    historyOut << LogSample::getSerializableNames();
     for (const auto& sample: history) {
-        history_out << sample;
+        historyOut << sample;
     }
 
     if (!std::filesystem::is_directory(Config::getInstance().getLogDir())) {
         std::filesystem::create_directories(logDir);
     }
     bool metadataExists = std::filesystem::exists(Config::getInstance().getLogDir() + "/metadata.csv");
-    std::ofstream metadata_out(Config::getInstance().getLogDir() + "/metadata.csv", std::ios_base::app);
+    std::ofstream metadataOut(Config::getInstance().getLogDir() + "/metadata.csv", std::ios_base::app);
     if (!metadataExists) {
-        metadata_out << "log_dir,epochs,batch_size,batch_count,params,total_time\n";
+        metadataOut << "log_dir,epochs,batch_size,batch_count,params,total_time\n";
     }
-    metadata_out << logDir << "," << history.back().epoch + 1 << ","
-                 << batchSize << "," << batchCount << "," << params << ",";
+    metadataOut << logDir << "," << history.back().epoch + 1 << ","
+                << batchSize << "," << batchCount << "," << params << ",";
 
     std::chrono::duration<float> duration_float = lastTimeStep - firstTimeStep;
-    metadata_out << duration_float.count() << "\n";
+    metadataOut << duration_float.count() << "\n";
 }

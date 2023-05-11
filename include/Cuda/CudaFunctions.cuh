@@ -6,6 +6,14 @@
 #define TRAINNN_CUDAFUNCTIONS_CUH
 
 namespace GPU {
+    const int BLOCK_DIM = 32;
+
+    const int BHL = 64;
+    const int BWR = 64;
+    const int BWL = 8;
+    const int THL = 8;
+    const int TWR = 8;
+
     __global__ void zeroInit(float* data, int height, int width);
 
     __global__ void multiply(float* data, int height, int width, float value);

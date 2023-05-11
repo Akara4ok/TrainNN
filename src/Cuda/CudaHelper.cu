@@ -4,18 +4,18 @@
 
 #include "Cuda/CudaHelper.cuh"
 
-void CudaHelper::calculateLinearThreadNum(int& threads_x, int& blocks_x, int size) {
-    threads_x = (size >= THREADS_PER_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : size;
-    blocks_x = (int) ceil(1.0 * size / threads_x);
+void CudaHelper::calculateLinearThreadNum(int& threadsX, int& blocksX, int size) {
+    threadsX = (size >= THREADS_PER_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : size;
+    blocksX = (int) ceil(1.0 * size / threadsX);
 }
 
 void
-CudaHelper::calculateBlockThreadNum(int& threads_x, int& threads_y, int& blocks_x, int& blocks_y, int height,
+CudaHelper::calculateBlockThreadNum(int& threadsX, int& threadsY, int& blocksX, int& blocksY, int height,
                                     int width) {
-    threads_x = (width >= THREAD_PER_TWO_DIM_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : width;
-    blocks_x = ceil(1.0 * width / threads_x);
-    threads_y = (height >= THREAD_PER_TWO_DIM_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : height;
-    blocks_y = ceil(1.0 * height / threads_y);
+    threadsX = (width >= THREAD_PER_TWO_DIM_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : width;
+    blocksX = ceil(1.0 * width / threadsX);
+    threadsY = (height >= THREAD_PER_TWO_DIM_BLOCK) ? THREAD_PER_TWO_DIM_BLOCK : height;
+    blocksY = ceil(1.0 * height / threadsY);
 }
 
 void CudaHelper::allocateGpuMemory(float** data, int size) {

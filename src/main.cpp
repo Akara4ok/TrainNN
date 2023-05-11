@@ -13,29 +13,29 @@
 int main() {
     Config::getInstance().setProvider(Provider::GPU);
 //    Provider provider = Config::getInstance().getProvider();
-    int image_width = 32;
-    int image_height = 32;
-    ImageFlattenDataset::Ptr train_dataset =
+    int imageWidth = 32;
+    int imageHeight = 32;
+    ImageFlattenDataset::Ptr trainDataset =
             ImageFlattenDataset::createDataset("../Data/mnist/train",
-                                               image_height, image_width,
-                                               10240, 10240);
+                                               imageHeight, imageWidth,
+                                               20, 500);
 
-    auto train_x = train_dataset->getData();
-    auto train_y = train_dataset->getLabel();
-    ImageFlattenDataset::Ptr val_dataset =
+    auto train_x = trainDataset->getData();
+    auto train_y = trainDataset->getLabel();
+    ImageFlattenDataset::Ptr valDataset =
             ImageFlattenDataset::createDataset("../Data/mnist/test",
-                                               image_height, image_width,
+                                               imageHeight, imageWidth,
                                                2000, 500);
 
-    auto val_x = val_dataset->getData();
-    auto val_y = val_dataset->getLabel();
+    auto val_x = valDataset->getData();
+    auto val_y = valDataset->getLabel();
 
-    ImageFlattenDataset::Ptr test_dataset =
+    ImageFlattenDataset::Ptr testDataset =
             ImageFlattenDataset::createDataset("../Data/mnistTest",
-                                               image_height, image_width);
+                                               imageHeight, imageWidth);
 
-    auto test_x = test_dataset->getData();
-    auto test_y = test_dataset->getLabel();
+    auto test_x = testDataset->getData();
+    auto test_y = testDataset->getLabel();
 
     std::cout << "Datasets have been read!" << std::endl;
 
@@ -44,7 +44,7 @@ int main() {
 //                                       new Linear(70, Activation::Relu),
 //                                       new Linear(70, Activation::Relu),
                                        new Linear(10, Activation::Softmax)
-                               }, image_height * image_width));
+                               }, imageHeight * imageWidth));
 
     model->compile(0.01, Cost::CrossEntropy);
 
@@ -52,7 +52,7 @@ int main() {
 //    model->deserialize("../Models/model.txt");
 
 //    Matrix image = ImageFlattenDataset::preprocessImage("../Data/mnistTest/0/02.jpg",
-//                                                        image_height, image_width);
+//                                                        imageHeight, imageWidth);
 //    Matrix pred_test_y = model->predict(image);
 //    test_y[0]->copyCpuToGpu();
 //    std::cout << *test_y[0];
@@ -61,17 +61,4 @@ int main() {
 
 //    model->serialize("../Models/model.txt");
     model->test(val_x, val_y);
-//    Matrix m1(3, 3, Provider::GPU);
-//    m1.randomInit(1);
-//    m1 = m1 + 1;
-//    m1.copyGpuToCpu();
-//    std::cout << m1;
-//
-////    m1 = m1 + 1;
-////    Matrix m2(1000, 1000, Provider::GPU);
-////    m2.zeroInit();
-////    m2 = m2 + 1;
-//    Matrix m3 = Matrix::sum(m1, 0);
-//    m3.copyGpuToCpu();
-//    std::cout << m3;
 }

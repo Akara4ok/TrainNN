@@ -2,8 +2,9 @@
 // Created by vlad on 4/24/23.
 //
 
-#include <limits>
 #include "Model/Activation/ReluActivation.h"
+
+#include <limits>
 
 Matrix ReluActivation::calculate(const Matrix& matrix) {
     return Matrix::clip(matrix,
