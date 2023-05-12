@@ -266,10 +266,11 @@ namespace GPU {
         const uint row = blockIdx.y * blockDim.y + threadIdx.y;
         const uint col = blockIdx.x * blockDim.x + threadIdx.x;
         if ((row < heightLhs) && (col < widthRhs)) {
-            result[row * widthRhs + col] = 0;
+            float acc = 0.0;
             for (int i = 0; i < widthLhs; i++) {
-                result[row * widthRhs + col] += lhsData[row * widthLhs + i] * rhsData[i * widthRhs + col];
+                acc += lhsData[row * widthLhs + i] * rhsData[i * widthRhs + col];
             }
+            result[row * widthRhs + col] = acc;
         }
     }
 
