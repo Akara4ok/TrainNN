@@ -178,9 +178,14 @@ namespace GPU {
             }
         }
 
+        __syncthreads();
+
+        const uint trow = blockIdx.x * BLOCK_DIM + threadIdx.y;
+        const uint tcol = blockIdx.y * BLOCK_DIM + threadIdx.x;
+
         for (int j = 0; j < BLOCK_DIM; j += BWL) {
-            if ((row + j) < height && col < width) {
-                result[col * height + (row + j)] = dataTile[threadIdx.y + j][threadIdx.x];
+            if (tcol < height && (trow+j) < width) {
+                result[(trow+j)*height + tcol] = dataTile[threadIdx.x][threadIdx.y + j];
             }
         }
     }
@@ -200,12 +205,16 @@ namespace GPU {
             }
         }
 
+        __syncthreads();
+
+        const uint trow = blockIdx.x * BLOCK_DIM + threadIdx.y;
+        const uint tcol = blockIdx.y * BLOCK_DIM + threadIdx.x;
+
         for (int j = 0; j < BLOCK_DIM; j += BWL) {
-            if ((row + j) < height && col < width) {
-                result[col * height + (row + j)] = dataTile[threadIdx.y + j][threadIdx.x];
+            if (tcol < height && (trow+j) < width) {
+                result[(trow+j)*height + tcol] = dataTile[threadIdx.x][threadIdx.y + j];
             }
         }
-
     }
 
 #endif
@@ -266,10 +275,11 @@ namespace GPU {
         const uint row = blockIdx.y * blockDim.y + threadIdx.y;
         const uint col = blockIdx.x * blockDim.x + threadIdx.x;
         if ((row < heightLhs) && (col < widthRhs)) {
-            result[row * widthRhs + col] = 0;
+            float acc = 0.0;
             for (int i = 0; i < widthLhs; i++) {
-                result[row * widthRhs + col] += lhsData[row * widthLhs + i] * rhsData[i * widthRhs + col];
+                acc += lhsData[row * widthLhs + i] * rhsData[i * widthRhs + col];
             }
+            result[row * widthRhs + col] = acc;
         }
     }
 
