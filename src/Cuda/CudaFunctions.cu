@@ -172,9 +172,12 @@ namespace GPU {
         uint col = blockIdx.x * BLOCK_DIM + threadIdx.x;
         uint row = blockIdx.y * BLOCK_DIM + threadIdx.y;
 
-        for (int j = 0; j < BLOCK_DIM; j += BWL) {
-            if ((row + j) < height && col < width) {
-                dataTile[threadIdx.y + j][threadIdx.x] = data[(row + j) * width + col];
+        int totalTiles = BLOCK_DIM / BWL;
+
+        for (int j = 0; j < totalTiles; j++) {
+            int currentCol = j * BWL;
+            if ((row + currentCol) < height && col < width) {
+                dataTile[threadIdx.y + currentCol][threadIdx.x] = data[(row + currentCol) * width + col];
             }
         }
 
@@ -183,9 +186,10 @@ namespace GPU {
         const uint trow = blockIdx.x * BLOCK_DIM + threadIdx.y;
         const uint tcol = blockIdx.y * BLOCK_DIM + threadIdx.x;
 
-        for (int j = 0; j < BLOCK_DIM; j += BWL) {
-            if (tcol < height && (trow+j) < width) {
-                result[(trow+j)*height + tcol] = dataTile[threadIdx.x][threadIdx.y + j];
+        for (int j = 0; j < totalTiles; j++) {
+            int currentCol = j * BWL;
+            if (tcol < height && (trow + currentCol) < width) {
+                result[(trow + currentCol) * height + tcol] = dataTile[threadIdx.x][threadIdx.y + currentCol];
             }
         }
     }
@@ -199,9 +203,12 @@ namespace GPU {
         uint col = blockIdx.x * BLOCK_DIM + threadIdx.x;
         uint row = blockIdx.y * BLOCK_DIM + threadIdx.y;
 
-        for (int j = 0; j < BLOCK_DIM; j += BWL) {
-            if ((row + j) < height && col < width) {
-                dataTile[threadIdx.y + j][threadIdx.x] = data[(row + j) * width + col];
+        int totalTiles = BLOCK_DIM / BWL;
+
+        for (int j = 0; j < totalTiles; j++) {
+            int currentCol = j * BWL;
+            if ((row + currentCol) < height && col < width) {
+                dataTile[threadIdx.y + currentCol][threadIdx.x] = data[(row + currentCol) * width + col];
             }
         }
 
@@ -210,9 +217,10 @@ namespace GPU {
         const uint trow = blockIdx.x * BLOCK_DIM + threadIdx.y;
         const uint tcol = blockIdx.y * BLOCK_DIM + threadIdx.x;
 
-        for (int j = 0; j < BLOCK_DIM; j += BWL) {
-            if (tcol < height && (trow+j) < width) {
-                result[(trow+j)*height + tcol] = dataTile[threadIdx.x][threadIdx.y + j];
+        for (int j = 0; j < totalTiles; j++) {
+            int currentCol = j * BWL;
+            if (tcol < height && (trow + currentCol) < width) {
+                result[(trow + currentCol) * height + tcol] = dataTile[threadIdx.x][threadIdx.y + currentCol];
             }
         }
     }
@@ -315,7 +323,7 @@ namespace GPU {
         __shared__ float aTile[BLOCK_DIM][BLOCK_DIM];
         __shared__ float bTile[BLOCK_DIM][BLOCK_DIM];
 
-        float acc = 0;
+        float sum = 0;
         const int tiles = (BLOCK_DIM + widthLhs - 1) / BLOCK_DIM;
 
         uint colLhsOffset = tCol;
@@ -330,17 +338,17 @@ namespace GPU {
 
             __syncthreads();
 
-            colLhsOffset += BLOCK_DIM;
-            rowRhsOffset += BLOCK_DIM;
-
             for (int i = 0; i < BLOCK_DIM; i++) {
-                acc += aTile[tRow][i] * bTile[i][tCol];
+                sum += aTile[tRow][i] * bTile[i][tCol];
             }
 
             __syncthreads();
+
+            colLhsOffset += BLOCK_DIM;
+            rowRhsOffset += BLOCK_DIM;
         }
         if ((row < heightLhs) && (col < widthRhs)) {
-            result[row * widthRhs + col] = acc;
+            result[row * widthRhs + col] = sum;
         }
     }
 
@@ -356,53 +364,53 @@ namespace GPU {
         __shared__ float aTile[BHL * BWL];
         __shared__ float bTile[BWL * BWR];
 
-        const uint innerColA = threadIdx.x % BWL;
-        const uint innerRowA = threadIdx.x / BWL;
-        const uint innerColB = threadIdx.x % BWR;
-        const uint innerRowB = threadIdx.x / BWR;
+        const uint innerColLhs = threadIdx.x % BWL;
+        const uint innerRowLhs = threadIdx.x / BWL;
+        const uint innerColRhs = threadIdx.x % BWR;
+        const uint innerRowRhs = threadIdx.x / BWR;
 
-        float threadResults[THL] = {0.0};
+        float localRes[THL]{};
 
-        uint rowLhs = blockIdx.y * BHL + innerRowA;
-        lhsData += rowLhs * widthLhs + innerColA;
+        uint rowLhs = blockIdx.y * BHL + innerRowLhs;
+        lhsData += rowLhs * widthLhs + innerColLhs;
 
-        uint colRhs = innerColB + blockIdx.x * BWR;
-        rhsData += innerRowB * widthRhs + colRhs;
+        uint colRhs = innerColRhs + blockIdx.x * BWR;
+        rhsData += innerRowRhs * widthRhs + colRhs;
 
         uint rowResOffset = tRow * THL + blockIdx.y * BHL;
         uint resCol = tCol + blockIdx.x * BWR;
         result += rowResOffset * widthRhs + resCol;
 
-        uint aTileIdx = innerRowA * BWL + innerColA;
-        uint bTileIdx = innerRowB * BWR + innerColB;
+        uint aTileIdx = innerRowLhs * BWL + innerColLhs;
+        uint bTileIdx = innerRowRhs * BWR + innerColRhs;
 
-        for (uint bkIdx = 0; bkIdx < widthLhs; bkIdx += BWL) {
+        for (uint blockId = 0; blockId < widthLhs; blockId += BWL) {
             aTile[aTileIdx] = 0;
             bTile[bTileIdx] = 0;
-            if (rowLhs < heightLhs && bkIdx + innerColA < widthLhs) {
+            if (rowLhs < heightLhs && blockId + innerColLhs < widthLhs) {
                 aTile[aTileIdx] = lhsData[0];
             }
-            if (bkIdx + innerRowB < widthLhs && colRhs < widthRhs) {
+            if (blockId + innerRowRhs < widthLhs && colRhs < widthRhs) {
                 bTile[bTileIdx] = rhsData[0];
             }
 
-            lhsData += BWL;
-            rhsData += BWL * widthRhs;
-
             __syncthreads();
 
-            for (uint dotIdx = 0; dotIdx < BWL; ++dotIdx) {
-                float tmpB = bTile[dotIdx * BWR + tCol];
-                for (uint resIdx = 0; resIdx < THL; ++resIdx) {
-                    threadResults[resIdx] += aTile[(tRow * THL + resIdx) * BWL + dotIdx] * tmpB;
+            for (uint subMatrixIndex = 0; subMatrixIndex < BWL; subMatrixIndex++) {
+                float temp = bTile[subMatrixIndex * BWR + tCol];
+                for (uint resI = 0; resI < THL; resI++) {
+                    localRes[resI] += aTile[(tRow * THL + resI) * BWL + subMatrixIndex] * temp;
                 }
             }
             __syncthreads();
+
+            lhsData += BWL;
+            rhsData += BWL * widthRhs;
         }
 
-        for (uint resIdx = 0; resIdx < THL; ++resIdx) {
-            if ((rowResOffset + resIdx) < heightLhs && resCol < widthRhs) {
-                result[0] = threadResults[resIdx];
+        for (uint resI = 0; resI < THL; resI++) {
+            if ((rowResOffset + resI) < heightLhs && resCol < widthRhs) {
+                result[0] = localRes[resI];
                 result += widthRhs;
             }
         }
@@ -424,70 +432,70 @@ namespace GPU {
         __shared__ float aTile[BHL * BWL];
         __shared__ float bTile[BWL * BWR];
 
-        const uint innerColA = threadIdx.x % BWL;
-        const uint innerRowA = threadIdx.x / BWL;
-        const uint innerColB = threadIdx.x % BWR;
-        const uint innerRowB = threadIdx.x / BWR;
+        const uint innerColLhs = threadIdx.x % BWL;
+        const uint innerRowLhs = threadIdx.x / BWL;
+        const uint innerColRhs = threadIdx.x % BWR;
+        const uint innerRowRhs = threadIdx.x / BWR;
 
-        const uint strideA = numThreadsBlockTile / BWL;
-        const uint strideB = numThreadsBlockTile / BWR;
+        const uint paddingLhs = numThreadsBlockTile / BWL;
+        const uint paddingRhs = numThreadsBlockTile / BWR;
 
-        float threadResults[THL * TWR] = {0.0};
+        float localRes[THL * TWR]{};
 
-        float regM[THL] = {0.0};
-        float regN[TWR] = {0.0};
+        float regI[THL]{};
+        float regJ[TWR]{};
 
-        uint aTileOffset = innerRowA * BWL + innerColA;
-        uint rowLhsOffset = innerRowA + blockIdx.y * BHL;
-        lhsData += rowLhsOffset * widthLhs + innerColA;
+        uint aTileOffset = innerRowLhs * BWL + innerColLhs;
+        uint rowLhsOffset = innerRowLhs + blockIdx.y * BHL;
+        lhsData += rowLhsOffset * widthLhs + innerColLhs;
 
-        uint bTileOffset = innerRowB * BWR + innerColB;
-        uint colRhsOffset = innerColB + blockIdx.x * BWR;
-        rhsData += innerRowB * widthRhs + colRhsOffset;
+        uint bTileOffset = innerRowRhs * BWR + innerColRhs;
+        uint colRhsOffset = innerColRhs + blockIdx.x * BWR;
+        rhsData += innerRowRhs * widthRhs + colRhsOffset;
 
         uint rowResOffset = tRow * THL + blockIdx.y * BHL;
         uint rowColOffset = tCol * TWR + blockIdx.x * BWR;
         result += rowResOffset * widthRhs + rowColOffset;
 
-        for (uint bkIdx = 0; bkIdx < widthLhs; bkIdx += BWL) {
-            for (uint loadOffset = 0; loadOffset < BHL; loadOffset += strideA) {
-                aTile[aTileOffset + loadOffset * BWL] = 0;
-                if (rowLhsOffset + loadOffset < heightLhs && bkIdx + innerColA < widthLhs) {
-                    aTile[aTileOffset + loadOffset * BWL] = lhsData[loadOffset * widthLhs + bkIdx];
+        for (uint blockId = 0; blockId < widthLhs; blockId += BWL) {
+            for (uint innerOffset = 0; innerOffset < BHL; innerOffset += paddingLhs) {
+                aTile[aTileOffset + innerOffset * BWL] = 0;
+                if (rowLhsOffset + innerOffset < heightLhs && blockId + innerColLhs < widthLhs) {
+                    aTile[aTileOffset + innerOffset * BWL] = lhsData[innerOffset * widthLhs + blockId];
                 }
             }
-            for (uint loadOffset = 0; loadOffset < BWL; loadOffset += strideB) {
+            for (uint loadOffset = 0; loadOffset < BWL; loadOffset += paddingRhs) {
                 bTile[bTileOffset + loadOffset * BWR] = 0;
-                if (bkIdx + innerRowB + loadOffset < widthLhs && colRhsOffset < widthRhs)
-                    bTile[bTileOffset + loadOffset * BWR] = rhsData[(bkIdx + loadOffset) * widthRhs];
+                if (blockId + innerRowRhs + loadOffset < widthLhs && colRhsOffset < widthRhs) {
+                    bTile[bTileOffset + loadOffset * BWR] = rhsData[(blockId + loadOffset) * widthRhs];
+                }
             }
 
             __syncthreads();
 
-            for (uint dotIdx = 0; dotIdx < BWL; ++dotIdx) {
+            for (uint subMatrixIndex = 0; subMatrixIndex < BWL; ++subMatrixIndex) {
                 for (uint i = 0; i < THL; ++i) {
-                    regM[i] = aTile[(tRow * THL + i) * BWL + dotIdx];
+                    regI[i] = aTile[(tRow * THL + i) * BWL + subMatrixIndex];
                 }
                 for (uint i = 0; i < TWR; ++i) {
-                    regN[i] = bTile[dotIdx * BWR + tCol * TWR + i];
+                    regJ[i] = bTile[subMatrixIndex * BWR + tCol * TWR + i];
                 }
-                for (uint resIdxM = 0; resIdxM < THL; ++resIdxM) {
-                    for (uint resIdxN = 0; resIdxN < TWR; ++resIdxN) {
-                        threadResults[resIdxM * TWR + resIdxN] += regM[resIdxM] * regN[resIdxN];
+                for (uint resI = 0; resI < THL; ++resI) {
+                    for (uint resJ = 0; resJ < TWR; ++resJ) {
+                        localRes[resI * TWR + resJ] += regI[resI] * regJ[resJ];
                     }
                 }
             }
             __syncthreads();
         }
 
-        for (uint resIdxM = 0; resIdxM < THL; ++resIdxM) {
-            for (uint resIdxN = 0; resIdxN < TWR; ++resIdxN) {
-                if (rowResOffset + resIdxM < heightLhs && rowColOffset + resIdxN < widthRhs) {
-                    result[resIdxM * widthRhs + resIdxN] = threadResults[resIdxM * TWR + resIdxN];
+        for (uint resI = 0; resI < THL; resI++) {
+            for (uint resJ = 0; resJ < TWR; resJ++) {
+                if (rowResOffset + resI < heightLhs && rowColOffset + resJ < widthRhs) {
+                    result[resI * widthRhs + resJ] = localRes[resI * TWR + resJ];
                 }
             }
         }
-
     }
 
 #endif
