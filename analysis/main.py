@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 def build_plot(filename):
     dataframe = pd.read_csv(filename)
 
-    train_loss = dataframe[["epoch", "batch_no", "loss"]]
+    train_loss = dataframe[["epoch", "batchNo", "loss"]]
     train_loss.dropna(subset=['loss'], inplace=True)
-    batch_count = int(train_loss['batch_no'].max() + 1)
-    train_loss["abs_batch"] = train_loss["epoch"] * batch_count + train_loss["batch_no"]
+    batch_count = int(train_loss['batchNo'].max() + 1)
+    train_loss["abs_batch"] = train_loss["epoch"] * batch_count + train_loss["batchNo"]
     train_loss['loss_avg'] = train_loss['loss'].rolling(batch_count, min_periods=1).mean()
 
     val_loss = dataframe[["epoch", "val_loss"]]
