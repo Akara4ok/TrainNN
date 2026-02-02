@@ -49,6 +49,10 @@ public:
         return width;
     };
 
+    [[nodiscard]] int empty() const {
+        return width == 0 && height == 0;
+    }
+
     [[nodiscard]] int getHeight() const {
         return height;
     };

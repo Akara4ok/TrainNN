@@ -4,6 +4,8 @@
 
 #include "Model/Metrics/Accuracy.h"
 
+#include <iostream>
+
 float Accuracy::calculate(const Matrix& pred_y, const Matrix& test_y) {
     if (pred_y.getHeight() == 0) {
         return Accuracy::calculateBinary(pred_y, test_y);
@@ -12,6 +14,11 @@ float Accuracy::calculate(const Matrix& pred_y, const Matrix& test_y) {
 }
 
 float Accuracy::calculateBinary(const Matrix& pred_y, const Matrix& test_y) {
+    if(pred_y.empty() || test_y.empty()){
+        std::cerr << "Wrong matrix sizes" << std::endl;
+        return {};
+    }
+
     Matrix diff = pred_y - test_y;
     Matrix clippedDiff = Matrix::clip(diff, -0.5 - THRESHOLD, 0.5 + THRESHOLD, 1, 1);
     Matrix isSameClass = Matrix::clip(clippedDiff, 0.5 + THRESHOLD, 0.5 + THRESHOLD, 1, 0);
@@ -20,6 +27,11 @@ float Accuracy::calculateBinary(const Matrix& pred_y, const Matrix& test_y) {
 }
 
 float Accuracy::calculateMultiClass(const Matrix& pred_y, const Matrix& test_y) {
+    if(pred_y.empty() || test_y.empty()){
+        std::cerr << "Wrong matrix sizes" << std::endl;
+        return {};
+    }
+    
     Matrix trueClasses = Matrix::argmax(test_y, 1);
     Matrix predClasses = Matrix::argmax(pred_y, 1);
 

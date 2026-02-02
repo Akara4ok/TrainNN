@@ -19,9 +19,9 @@ public:
 
     static Matrix preprocessImage(const std::string& imagePath, int height, int width);
 
-    Matrix::Ptr preprocessImage(std::string imagePath) override;
+    Matrix::Ptr preprocessImage(const std::string& imagePath) override;
 
-    Matrix::Ptr preprocessLabel(std::string imagePath) override;
+    Matrix::Ptr preprocessLabel(const std::string& imagePath) override;
 
     static ImageFlattenDataset::Ptr createDataset(const std::string& folderPath,
                                                   int imageHeight, int imageWidth, int batchSize = -1,

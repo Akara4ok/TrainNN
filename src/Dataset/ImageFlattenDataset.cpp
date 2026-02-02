@@ -18,9 +18,15 @@ ImageFlattenDataset::ImageFlattenDataset(const std::string& folderPath,
 
 ImageFlattenDataset::Ptr
 ImageFlattenDataset::createDataset(const std::string& folderPath, int imageHeight, int imageWidth, int batchSize,
-                                   int fixedSize, int seed) {
+                                   int fixedSize, int seed) {    
     ImageFlattenDataset::Ptr dataset(new ImageFlattenDataset(folderPath, imageHeight, imageWidth, batchSize, seed));
     std::set<std::string> uniqueLabels;
+
+    if(!std::filesystem::exists(folderPath)) {
+        std::cerr << "Folder path does not exist: " << folderPath << std::endl;
+        return dataset;
+    }
+
     for (const auto& dirEntry: std::filesystem::recursive_directory_iterator(folderPath)) {
         if (is_directory(dirEntry.path())) {
             std::string labelName = dirEntry.path().filename();
@@ -45,8 +51,15 @@ ImageFlattenDataset::createDataset(const std::string& folderPath, int imageHeigh
     std::vector<Matrix::Ptr> singleBatchLabel;
     for (const auto& imagePath: dataset->imagePaths) {
         try {
-            singleBatchData.push_back(dataset->preprocessImage(imagePath));
-            singleBatchLabel.push_back(dataset->preprocessLabel(imagePath));
+            auto imageTensor = dataset->preprocessImage(imagePath);
+            auto labelTensor = dataset->preprocessLabel(imagePath);
+
+            if(!imageTensor || !labelTensor){
+                continue;
+            }
+
+            singleBatchData.push_back(std::move(imageTensor));
+            singleBatchLabel.push_back(std::move(labelTensor));
         }
         catch (std::exception& e) {
 
@@ -72,6 +85,10 @@ ImageFlattenDataset::createDataset(const std::string& folderPath, int imageHeigh
 }
 
 Matrix ImageFlattenDataset::preprocessImage(const std::string& imagePath, int height, int width) {
+    if(!std::filesystem::exists(imagePath)){
+        std::cerr << "File does not exist: " << imagePath << std::endl;
+        return {};
+    }
     cv::Mat image = imread(imagePath, cv::IMREAD_GRAYSCALE);
     cv::resize(image, image, cv::Size(width, height));
     image.convertTo(image, CV_32F, 1.0 / 255, 0);
@@ -80,7 +97,12 @@ Matrix ImageFlattenDataset::preprocessImage(const std::string& imagePath, int he
     return matrix;
 }
 
-Matrix::Ptr ImageFlattenDataset::preprocessImage(std::string imagePath) {
+Matrix::Ptr ImageFlattenDataset::preprocessImage(const std::string& imagePath) {
+    if(!std::filesystem::exists(imagePath)){
+        std::cerr << "File does not exist: " << imagePath << std::endl;
+        return {};
+    }
+
     cv::Mat image = imread(imagePath, cv::IMREAD_GRAYSCALE);
     cv::resize(image, image, cv::Size(imageHeight, imageWidth));
     image.convertTo(image, CV_32F, 1.0 / 255, 0);
@@ -89,7 +111,12 @@ Matrix::Ptr ImageFlattenDataset::preprocessImage(std::string imagePath) {
     return matrix;
 }
 
-Matrix::Ptr ImageFlattenDataset::preprocessLabel(std::string imagePath) {
+Matrix::Ptr ImageFlattenDataset::preprocessLabel(const std::string& imagePath) {
+    if(!std::filesystem::exists(imagePath)){
+        std::cerr << "File does not exist: " << imagePath << std::endl;
+        return {};
+    }
+    
     Matrix::Ptr label(new Matrix(1, 1));
     if (labelsNames.size() > 2) {
         label.reset(new Matrix(static_cast<int>(labelsNames.size()), 1));

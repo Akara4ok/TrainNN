@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
 #include "Model/Layer/Linear.h"
 #include "Model/CostFunction/BinaryCrossEntropy.h"
 #include "Model/CostFunction/CrossEntropy.h"
@@ -57,7 +58,14 @@ void
 Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, const std::vector<Matrix::Ptr>& train_y,
              const std::vector<Matrix::Ptr>& val_x, const std::vector<Matrix::Ptr>& val_y,
              const std::string& logFolder) {
+
+    if(train_x.empty() || train_y.empty()) {
+        std::cerr << "Training data is empty!" << std::endl;
+        return;
+    }
+    
     Monitoring monitoring(train_x[0]->getWidth(), static_cast<int>(train_x.size()), numberOfParameters, verb);
+    Config::getInstance().setLogDir(logFolder);
 
     //reserve some batches only if we have 1 batch
     std::map<std::string, Matrix> reservedBatches;
@@ -117,6 +125,11 @@ Model::train(int epochs, Verbose verb, const std::vector<Matrix::Ptr>& train_x, 
 }
 
 Matrix Model::predict(const Matrix& input) {
+    if(input.empty()){
+        std::cerr << "Empty input" << std::endl;
+        return {};
+    }
+
     Matrix current;
     if (Config::getInstance().getProvider() == Provider::GPU && !input.getIsUseGpu()) {
         current = Matrix::copy(input, Provider::CPU, Provider::GPU);
@@ -161,6 +174,11 @@ void Model::test(std::vector<Matrix::Ptr> test_x, std::vector<Matrix::Ptr> test_
 }
 
 void Model::serialize(const std::string& path) {
+    auto parentPath = std::filesystem::path(path).parent_path();
+    if(!std::filesystem::exists(parentPath)) {
+        std::filesystem::create_directories(parentPath);
+    }
+
     std::ofstream file(path);
 
     file << layers.size() << "\n";
