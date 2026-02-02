@@ -42,15 +42,6 @@ void testModelTraining(const std::string &dataDir, int imageHeight, int imageWid
 }
 
 void testModelInference(const std::string &dataDir, int imageHeight, int imageWidth) {
-    ImageFlattenDataset::Ptr testDataset =
-        ImageFlattenDataset::createDataset(dataDir,
-                                           imageHeight, imageWidth);
-
-    auto test_x = testDataset->getData();
-    auto test_y = testDataset->getLabel();
-
-    std::cout << "Datasets have been read!" << std::endl;
-
     Model::Ptr model(new Model({new Linear(70, Activation::Relu),
                                 new Linear(10, Activation::Softmax)},
                                imageHeight * imageWidth));
@@ -60,14 +51,6 @@ void testModelInference(const std::string &dataDir, int imageHeight, int imageWi
     Matrix image = ImageFlattenDataset::preprocessImage(dataDir + "/0/0.jpg",
                                                         imageHeight, imageWidth);
     Matrix pred_test_y = model->predict(image);
-
-    if(test_y.empty()){
-        std::cerr << "Empty test data" << std::endl;
-        return;
-    }
-
-    test_y[0]->copyCpuToGpu();
-    std::cout << *test_y[0];
     std::cout << pred_test_y;
 } 
 

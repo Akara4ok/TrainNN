@@ -137,7 +137,8 @@ _deps
 *.fatbin
 
 # Neural networks
-Data/
 Models/
 Logs/
 build/
+Data/mnist
+Data/raw

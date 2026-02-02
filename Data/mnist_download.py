@@ -1,9 +1,8 @@
 import os
 from torchvision import datasets
-from torchvision.transforms import ToPILImage
 
-RAW_DIR = "./raw"
-OUTPUT_DIR = "./mnist"
+RAW_DIR = "./Data/raw"
+OUTPUT_DIR = "./Data/mnist"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
